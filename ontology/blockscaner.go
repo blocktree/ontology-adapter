@@ -580,36 +580,36 @@ func (bs *ONTBlockScanner) extractTransaction(trx *Transaction, result *ExtractR
 				input.TxID = trx.TxID
 				input.Address = from
 				if trx.ContractAddress == ontologyTransaction.ONTContractAddress {
-					input.Symbol = "ONT"
+					input.Symbol = bs.wm.Symbol()
 					input.Amount = trx.Amount
 					input.Coin = openwallet.Coin{
-						Symbol:     "ONT",
+						Symbol:     bs.wm.Symbol(),
 						IsContract: true,
-						ContractID: ontologyTransaction.ONTContractAddress,
+						ContractID: openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONTContractAddress),
 						Contract:openwallet.SmartContract{
-							ContractID:ontologyTransaction.ONTContractAddress,
-							Symbol:"ONT",
+							ContractID:openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONTContractAddress),
+							Symbol:bs.wm.Symbol(),
 							Address:ontologyTransaction.ONTContractAddress,
 							Token:"ONT",
-							Name:"ontology",
+							Name:bs.wm.FullName(),
 							Decimals:0,
 						},
 					}
 					decimal = 0
 				} else if trx.ContractAddress == ontologyTransaction.ONGContractAddress {
-					input.Symbol = "ONT"
+					input.Symbol = bs.wm.Symbol()
 					amountValue, _ := strconv.ParseInt(trx.Amount, 10, 64)
 					input.Amount = convertToAmount(uint64(amountValue))
 					input.Coin = openwallet.Coin{
-						Symbol:     "ONT",
+						Symbol:     bs.wm.Symbol(),
 						IsContract: true,
-						ContractID: ontologyTransaction.ONGContractAddress,
+						ContractID: openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONGContractAddress),
 						Contract:openwallet.SmartContract{
-							ContractID:ontologyTransaction.ONGContractAddress,
-							Symbol:"ONT",
+							ContractID:openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONGContractAddress),
+							Symbol:bs.wm.Symbol(),
 							Address:ontologyTransaction.ONGContractAddress,
 							Token:"ONG",
-							Name:"ontology",
+							Name:bs.wm.FullName(),
 							Decimals:9,
 						},
 					}
