@@ -689,8 +689,8 @@ func (bs *ONTBlockScanner) extractTransaction(trx *Transaction, result *ExtractR
 
 			for _, extractData := range result.extractData {
 				tx := &openwallet.Transaction{
-					From:        []string{from + ":" + amount + " " + coin.Symbol},
-					To:          []string{to + ":" + amount + " " + coin.Symbol},
+					From:        []string{from + ":" + amount},
+					To:          []string{to + ":" + amount},
 					Amount:      amount,
 					Fees:        fee,
 					Coin:        coin,
@@ -1151,7 +1151,7 @@ func (bs *ONTBlockScanner) GetBalanceByAddress(address ...string) ([]*openwallet
 		})
 	}
 
-	return addrsBalance, nil
+	return nil, nil
 
 }
 

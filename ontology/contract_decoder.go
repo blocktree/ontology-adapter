@@ -145,7 +145,7 @@ func (decoder *ContractDecoder) GetTokenBalanceByAddress(contract openwallet.Sma
 		tokenBalance := openwallet.TokenBalance{
 			Contract: &contract,
 		}
-		if contract.ContractID == ontologyTransaction.ONTContractAddress {
+		if contract.Address == ontologyTransaction.ONTContractAddress {
 			balance, err := decoder.wm.RPCClient.getONTBalance(address[i])
 			if err != nil {
 				log.Error("Get ONT balance of address [%v] failed with error : [%v]", address[i], err)
@@ -158,7 +158,7 @@ func (decoder *ContractDecoder) GetTokenBalanceByAddress(contract openwallet.Sma
 				ConfirmBalance:   balance.ONTBalance.String(),
 				UnconfirmBalance: "0",
 			}
-		} else if contract.ContractID == ontologyTransaction.ONGContractAddress {
+		} else if contract.Address == ontologyTransaction.ONGContractAddress {
 			balance, err := decoder.wm.RPCClient.getONGBalance(address[i])
 			if err != nil {
 				log.Error("Get ONG balance of address [%v] failed with error : [%v]", address[i], err)

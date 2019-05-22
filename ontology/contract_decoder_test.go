@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/blocktree/openwallet/openwallet"
 	"github.com/blocktree/go-owcdrivers/ontologyTransaction"
+	"github.com/blocktree/openwallet/openwallet"
 )
 
 func Test_GetTokenBalanceByAddress(t *testing.T) {
@@ -29,7 +29,7 @@ func Test_GetTokenBalanceByAddress(t *testing.T) {
 		fmt.Println(ret)
 	}
 
-	contract.ContractID = ontologyTransaction.ONGContractAddress
+	contract.Address = ontologyTransaction.ONGContractAddress
 	ret, err = tm.ContractDecoder.GetTokenBalanceByAddress(contract, address1, address2)
 
 	if err != nil {
