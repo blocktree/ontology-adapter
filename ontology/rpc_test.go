@@ -73,32 +73,9 @@ func Test_getBlockHashByRest(t *testing.T) {
 	}
 }
 
-func Test_getTxResult(t *testing.T) {
-	txid := "a2023b69726d2de58f68744716c723c0ced1613dc353f3213f93728ec1ee02ce"
-	from, to, amount, _, _ := tw.RPCClient.getTxResult(txid)
-	fmt.Println(from)
-	fmt.Println(to)
-	fmt.Println(amount)
-}
-
 func Test_getTransaction(t *testing.T) {
 	txid := "7e6cc8b8819b342e901cc3a282046006be3a7cf8231a01c0761e1937fbf3a60d"
 	trx, err := tw.RPCClient.getTransaction(txid)
 	fmt.Println(err)
 	fmt.Println(trx)
-}
-
-func Test_getGasPrice(t *testing.T) {
-	gp, err := tw.RPCClient.getGasPrice()
-	fmt.Println(err)
-	fmt.Println(gp)
-}
-
-func Test_txresult(t *testing.T) {
-	params := []interface{}{"a2023b69726d2de58f68744716c723c0ced1613dc353f3213f93728ec1ee02ce"}
-
-	resp, err := tw.RPCClient.sendRpcRequest("0", "getsmartcodeevent", params)
-
-	fmt.Println(err)
-	fmt.Println(string(resp))
 }

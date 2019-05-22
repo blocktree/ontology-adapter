@@ -568,141 +568,126 @@ func (bs *ONTBlockScanner) extractTransaction(trx *Transaction, result *ExtractR
 		success = false
 	} else {
 
-		if success && trx.Method == "transfer" {
-			amount := ""
-			fee := ""
-			coin := openwallet.Coin{}
-			decimal := int32(0)
-			from := trx.From
-			sourceKey, ok := scanAddressFunc(from)
-			if ok {
-				input := openwallet.TxInput{}
-				input.TxID = trx.TxID
-				input.Address = from
-				if trx.ContractAddress == ontologyTransaction.ONTContractAddress {
-					input.Symbol = bs.wm.Symbol()
-					input.Amount = trx.Amount
-					input.Coin = openwallet.Coin{
-						Symbol:     bs.wm.Symbol(),
-						IsContract: true,
-						ContractID: openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONTContractAddress),
-						Contract:openwallet.SmartContract{
-							ContractID:openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONTContractAddress),
-							Symbol:bs.wm.Symbol(),
-							Address:ontologyTransaction.ONTContractAddress,
-							Token:"ONT",
-							Name:bs.wm.FullName(),
-							Decimals:0,
-						},
-					}
-					decimal = 0
-				} else if trx.ContractAddress == ontologyTransaction.ONGContractAddress {
-					input.Symbol = bs.wm.Symbol()
-					amountValue, _ := strconv.ParseInt(trx.Amount, 10, 64)
-					input.Amount = convertToAmount(uint64(amountValue))
-					input.Coin = openwallet.Coin{
-						Symbol:     bs.wm.Symbol(),
-						IsContract: true,
-						ContractID: openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONGContractAddress),
-						Contract:openwallet.SmartContract{
-							ContractID:openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONGContractAddress),
-							Symbol:bs.wm.Symbol(),
-							Address:ontologyTransaction.ONGContractAddress,
-							Token:"ONG",
-							Name:bs.wm.FullName(),
-							Decimals:9,
-						},
-					}
-					decimal = 9
-				} else {
-					// other token
-				}
-				amount = input.Amount
-				coin = input.Coin
-				input.Index = 0
-				input.Sid = openwallet.GenTxInputSID(trx.TxID, input.Coin.Symbol, "", 0)
-				input.CreateAt = createAt
-				input.BlockHeight = trx.BlockHeight
-				input.BlockHash = trx.BlockHash
-				ed := result.extractData[sourceKey]
-				if ed == nil {
-					ed = openwallet.NewBlockExtractData()
-					result.extractData[sourceKey] = ed
-				}
-				ed.TxInputs = append(ed.TxInputs, &input)
+		if success && len(trx.Notifys) != 0 {
 
-				tmp := *&input
-				feeCharge := &tmp
-				feeCharge.Address = trx.Payer
-				feeCharge.Symbol = "ONG"
-				feeCharge.Amount = convertToAmount(uint64(trx.GasPrice * trx.GasLimit))
-				fee = feeCharge.Amount
-				feeCharge.Index = 1
-				feeCharge.Sid = openwallet.GenTxInputSID(trx.TxID, feeCharge.Coin.Symbol, "", 1)
-				ed.TxInputs = append(ed.TxInputs, feeCharge)
-
-			}
-			to := trx.To
-			sourceKey, ok = scanAddressFunc(to)
-			if ok {
-				output := openwallet.TxOutPut{}
-				output.Received = true
-				output.TxID = trx.TxID
-				output.Address = to
-				if trx.ContractAddress == ontologyTransaction.ONTContractAddress {
-					output.Symbol = "ONT"
-					output.Amount = trx.Amount
-					output.Coin = openwallet.Coin{
-						Symbol:     "ONT",
-						IsContract: true,
-						ContractID: ontologyTransaction.ONTContractAddress,
-					}
-					decimal = 0
-				} else if trx.ContractAddress == ontologyTransaction.ONGContractAddress {
-					output.Symbol = "ONG"
-					amountValue, _ := strconv.ParseInt(trx.Amount, 10, 64)
-					output.Amount = convertToAmount(uint64(amountValue))
-					output.Coin = openwallet.Coin{
-						Symbol:     "ONG",
-						IsContract: true,
-						ContractID: ontologyTransaction.ONGContractAddress,
-					}
-					decimal = 9
-				} else {
-					// other token
+			for _, notify := range trx.Notifys {
+				if notify.Method!="transfer"{
+					continue
 				}
-				amount = output.Amount
-				coin = output.Coin
-				output.Index = 0
-				output.Sid = openwallet.GenTxOutPutSID(trx.TxID, output.Coin.Symbol, "", 0)
-				output.CreateAt = createAt
-				output.BlockHeight = trx.BlockHeight
-				output.BlockHash = trx.BlockHash
-				ed := result.extractData[sourceKey]
-				if ed == nil {
-					ed = openwallet.NewBlockExtractData()
-					result.extractData[sourceKey] = ed
+				sourceKey, ok := scanAddressFunc(notify.From)
+				if ok{
+					input := openwallet.TxInput{}
+					input.TxID=trx.TxID
+					input.Address=notify.From
+					input.Symbol=bs.wm.Symbol()
+					input.Amount=notify.Amount
+
+					if notify.ContractAddress == ontologyTransaction.ONTContractAddress{
+						input.Coin = openwallet.Coin{
+										Symbol:     bs.wm.Symbol(),
+										IsContract: true,
+										ContractID: openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONTContractAddress),
+										Contract:openwallet.SmartContract{
+											ContractID:openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONTContractAddress),
+											Symbol:bs.wm.Symbol(),
+											Address:ontologyTransaction.ONTContractAddress,
+											Token:"ONT",
+											Name:bs.wm.FullName(),
+											Decimals:0,
+										},
+									}
+					}else if notify.ContractAddress == ontologyTransaction.ONGContractAddress{
+						input.Coin = openwallet.Coin{
+							Symbol:     bs.wm.Symbol(),
+							IsContract: true,
+							ContractID: openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONGContractAddress),
+							Contract:openwallet.SmartContract{
+								ContractID:openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONGContractAddress),
+								Symbol:bs.wm.Symbol(),
+								Address:ontologyTransaction.ONGContractAddress,
+								Token:"ONG",
+								Name:bs.wm.FullName(),
+								Decimals:9,
+							},
+						}
+					}else{
+						//
+					}
+					input.Index = 0
+					input.Sid = openwallet.GenTxInputSID(trx.TxID, input.Coin.Symbol, input.Coin.Contract.Address, 0)
+					input.CreateAt = createAt
+					input.BlockHeight = trx.BlockHeight
+					input.BlockHash = trx.BlockHash
+
+					ed := result.extractData[sourceKey]
+					if ed == nil{
+						ed = openwallet.NewBlockExtractData()
+						result.extractData[sourceKey] = ed
+					}		
+					
+					 ed.TxInputs = append(ed.TxInputs, &input)
+					 output := openwallet.TxOutPut{}
+					 output.Address = notify.To
+					 ed.TxOutputs = append(ed.TxOutputs,&output)
 				}
 
-				ed.TxOutputs = append(ed.TxOutputs, &output)
-			}
+				sourceKey, ok = scanAddressFunc(notify.To)
+				if ok{
+					output := openwallet.TxOutPut{}
+					output.Received = true
+					output.TxID = trx.TxID
+					output.Address = notify.To
+					output.Symbol = bs.wm.Symbol()
+					output.Amount = notify.Amount
+					if notify.ContractAddress == ontologyTransaction.ONTContractAddress{
+						output.Coin = openwallet.Coin{
+										Symbol:     bs.wm.Symbol(),
+										IsContract: true,
+										ContractID: openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONTContractAddress),
+										Contract:openwallet.SmartContract{
+											ContractID:openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONTContractAddress),
+											Symbol:bs.wm.Symbol(),
+											Address:ontologyTransaction.ONTContractAddress,
+											Token:"ONT",
+											Name:bs.wm.FullName(),
+											Decimals:0,
+										},
+									}
+					}else if notify.ContractAddress == ontologyTransaction.ONGContractAddress{
+						output.Coin = openwallet.Coin{
+							Symbol:     bs.wm.Symbol(),
+							IsContract: true,
+							ContractID: openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONGContractAddress),
+							Contract:openwallet.SmartContract{
+								ContractID:openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONGContractAddress),
+								Symbol:bs.wm.Symbol(),
+								Address:ontologyTransaction.ONGContractAddress,
+								Token:"ONG",
+								Name:bs.wm.FullName(),
+								Decimals:9,
+							},
+						}
+					}else{
+						//
+					}
+					output.Index = 0
+					output.Sid = openwallet.GenTxOutPutSID(trx.TxID, output.Coin.Symbol, output.Coin.Contract.Address, 0)
+					output.CreateAt = createAt
+					output.BlockHeight = trx.BlockHeight
+					output.BlockHash = trx.BlockHash
 
-			for _, extractData := range result.extractData {
-				tx := &openwallet.Transaction{
-					From:        []string{from + ":" + amount},
-					To:          []string{to + ":" + amount},
-					Amount:      amount,
-					Fees:        fee,
-					Coin:        coin,
-					BlockHash:   trx.BlockHash,
-					BlockHeight: trx.BlockHeight,
-					TxID:        trx.TxID,
-					Decimal:     decimal,
-					Status:      "1",
+					ed := result.extractData[sourceKey]
+					
+					if ed == nil{
+						ed = openwallet.NewBlockExtractData()
+						result.extractData[sourceKey] = ed
+					}
+					
+					ed.TxOutputs = append(ed.TxOutputs, &output)
+					input := openwallet.TxInput{}
+					input.Address = notify.From
+					ed.TxInputs =append(ed.TxInputs, &input)
 				}
-				wxID := openwallet.GenTransactionWxID(tx)
-				tx.WxID = wxID
-				extractData.Transaction = tx
 			}
 
 		}
@@ -713,22 +698,69 @@ func (bs *ONTBlockScanner) extractTransaction(trx *Transaction, result *ExtractR
 	result.Success = success
 }
 
+
+func modifyExtractData(data *openwallet.TxExtractData)[]*openwallet.TxExtractData{
+	var eds []*openwallet.TxExtractData
+	for index := 0; index < len(data.TxInputs); index++ {
+		ed := &openwallet.TxExtractData{}
+		if data.TxInputs[index].Symbol == ""{
+			ed.TxOutputs = append(ed.TxOutputs, data.TxOutputs[index])
+			tx := &openwallet.Transaction{
+				From:        []string{data.TxInputs[index].Address + ":" + data.TxOutputs[index].Amount},
+				To:          []string{data.TxOutputs[index].Address + ":" + data.TxOutputs[index].Amount},
+				Amount:      data.TxOutputs[index].Amount,
+				Fees:        "0",
+				Coin:        data.TxOutputs[index].Coin,
+				BlockHash:   data.TxOutputs[index].BlockHash,
+				BlockHeight: data.TxOutputs[index].BlockHeight,
+				TxID:        data.TxOutputs[index].TxID,
+				Decimal:     0,
+				Status:      "1",
+			}
+			tx.WxID = openwallet.GenTransactionWxID(tx)
+			ed.Transaction = tx
+		}else{
+			ed.TxInputs = append(ed.TxInputs, data.TxInputs[index])
+			tx := &openwallet.Transaction{
+				From:        []string{data.TxInputs[index].Address + ":" + data.TxInputs[index].Amount},
+				To:          []string{data.TxOutputs[index].Address + ":" + data.TxInputs[index].Amount},
+				Amount:      data.TxInputs[index].Amount,
+				Fees:        "0",
+				Coin:        data.TxInputs[index].Coin,
+				BlockHash:   data.TxInputs[index].BlockHash,
+				BlockHeight: data.TxInputs[index].BlockHeight,
+				TxID:        data.TxInputs[index].TxID,
+				Decimal:     0,
+				Status:      "1",
+			}
+			tx.WxID = openwallet.GenTransactionWxID(tx)
+			ed.Transaction = tx
+		}
+
+		eds = append(eds,ed)
+	}
+	return eds
+}
 //newExtractDataNotify 发送通知
 func (bs *ONTBlockScanner) newExtractDataNotify(height uint64, extractData map[string]*openwallet.TxExtractData) error {
 
 	for o, _ := range bs.Observers {
 		for key, data := range extractData {
-			err := o.BlockExtractDataNotify(key, data)
-			if err != nil {
-				log.Error("BlockExtractDataNotify unexpected error:", err)
-				//记录未扫区块
-				unscanRecord := NewUnscanRecord(height, "", "ExtractData Notify failed.")
-				err = bs.SaveUnscanRecord(unscanRecord)
+			eds := modifyExtractData(data)
+			for _, ed := range eds {
+				err := o.BlockExtractDataNotify(key, ed)
 				if err != nil {
-					log.Std.Error("block height: %d, save unscan record failed. unexpected error: %v", height, err.Error())
-				}
-
+					log.Error("BlockExtractDataNotify unexpected error:", err)
+					//记录未扫区块
+					unscanRecord := NewUnscanRecord(height, "", "ExtractData Notify failed.")
+					err = bs.SaveUnscanRecord(unscanRecord)
+					if err != nil {
+						log.Std.Error("block height: %d, save unscan record failed. unexpected error: %v", height, err.Error())
+					}
+	
+				}	
 			}
+
 		}
 	}
 

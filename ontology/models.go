@@ -82,21 +82,25 @@ type Block struct {
 	Transactions     []string
 }
 
-type Transaction struct {
-	TxID            string `json:"txid"`
-	Version         uint64 `json:"version"`
-	Nonce           uint64 `json:"nonce"`
-	GasPrice        uint64 `json:"gasprice"`
-	GasLimit        uint64 `json:"gaslimit"`
-	Payer           string `json:"payer"`
-	TxType          uint64 `json:"txtype"`
+type Notify struct {
+	ContractAddress string
 	Method          string
-	ContractAddress string `json:"contractaddress"`
-	From            string `json:"from"`
-	To              string `json:"to"`
-	Amount          string `json:"amount"`
-	BlockHeight     uint64 `json:"blockheight"`
-	BlockHash       string `json:"blockhash"`
+	From            string
+	To              string
+	Amount          string
+}
+
+type Transaction struct {
+	TxID        string `json:"txid"`
+	Version     uint64 `json:"version"`
+	Nonce       uint64 `json:"nonce"`
+	GasPrice    uint64 `json:"gasprice"`
+	GasLimit    uint64 `json:"gaslimit"`
+	Payer       string `json:"payer"`
+	TxType      uint64 `json:"txtype"`
+	Notifys     []Notify
+	BlockHeight uint64 `json:"blockheight"`
+	BlockHash   string `json:"blockhash"`
 }
 
 func NewBlock(json *gjson.Result) *Block {

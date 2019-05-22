@@ -8,6 +8,7 @@ require (
 	github.com/blocktree/go-owcdrivers v1.0.12
 	github.com/blocktree/go-owcrypt v1.0.1
 	github.com/blocktree/openwallet v1.4.1
+	github.com/cweill/gotests v1.5.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/ethereum/go-ethereum v1.8.25
 	github.com/go-playground/locales v0.12.1 // indirect

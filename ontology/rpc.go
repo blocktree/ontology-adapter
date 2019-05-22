@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/blocktree/go-owcdrivers/ontologyTransaction"
 	"github.com/tidwall/gjson"
 )
 
@@ -137,7 +138,9 @@ func (rpc *RpcClient) getTransaction(txid string) (*Transaction, error) {
 	if err != nil {
 		return nil, err
 	}
-	trx.From, trx.To, trx.Amount, trx.ContractAddress, trx.Method, err = rpc.getTxDetail(trx.TxID)
+
+	trx.Notifys, err = rpc.getTxDetail(trx.TxID)
+
 	if err != nil {
 		return nil, err
 	}
@@ -215,56 +218,42 @@ func (rpc *RpcClient) getBalance(address string) (*AddrBalance, error) {
 	return ret, nil
 }
 
-func (rpc *RpcClient) getTxResult(txid string) (string, string, string, bool, error) {
-	params := []interface{}{txid}
-
-	resp, err := rpc.sendRpcRequest("0", "getsmartcodeevent", params)
-
-	if err != nil {
-		return "", "", "", false, errors.New("Get transaction result failed")
-	}
-	if err != nil {
-		return "", "", "", false, errors.New("Get transaction result failed")
-	}
-
-	tmp1 := gjson.Get(string(resp), "Notify").Array()
-
-	tmp2 := gjson.Get(tmp1[0].Raw, "States").Array()
-
-	from := tmp2[1].String()
-	to := tmp2[2].String()
-	amount := tmp2[3].String()
-
-	return from, to, amount, true, nil
-}
-
 // from,to,amount,contract,method,error
-func (rpc *RpcClient) getTxDetail(txid string) (string, string, string, string, string, error) {
+func (rpc *RpcClient) getTxDetail(txid string) ([]Notify, error) {
 	params := []interface{}{txid}
 
 	resp, err := rpc.sendRpcRequest("0", "getsmartcodeevent", params)
 	if err != nil {
-		return "", "", "", "", "", errors.New("Get transaction result failed")
+		return nil, errors.New("Get transaction result failed")
 	}
 	if err != nil {
-		return "", "", "", "", "", errors.New("Get transaction result failed")
+		return nil, errors.New("Get transaction result failed")
 	}
 
-	notify := gjson.Get(string(resp), "Notify").Array()[0]
+	notifys := gjson.Get(string(resp), "Notify").Array()
+	var ret []Notify
+	if len(notifys) >= 1 {
+		for _, notify := range notifys {
+			contractAddress := notify.Get("ContractAddress").String()
+			if contractAddress != ontologyTransaction.ONGContractAddress && contractAddress != ontologyTransaction.ONTContractAddress {
+				continue
+			}
+			states := notify.Get("States").Array()
 
-	contract := notify.Get("ContractAddress").String()
-
-	states := notify.Get("States").Array()
-
-	if len(states) != 4 {
-		return "", "", "", "", "", errors.New("Get transaction result failed")
+			if len(states) != 4 {
+				return nil, errors.New("Get transaction result failed")
+			}
+			ret = append(ret, Notify{
+				ContractAddress: contractAddress,
+				Method:          states[0].String(),
+				From:            states[1].String(),
+				To:              states[2].String(),
+				Amount:          states[3].String(),
+			})
+		}
 	}
-	method := states[0].String()
-	from := states[1].String()
-	to := states[2].String()
-	amount := states[3].String()
 
-	return from, to, amount, contract, method, nil
+	return ret, nil
 }
 
 func (rpc *RpcClient) getGasPrice() (uint64, error) {
