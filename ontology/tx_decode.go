@@ -32,7 +32,7 @@ import (
 )
 
 type TransactionDecoder struct {
-	openwallet.TransactionDecoderBase
+	*openwallet.TransactionDecoderBase
 	wm *WalletManager //钱包管理者
 }
 
@@ -445,6 +445,22 @@ func (decoder *TransactionDecoder) VerifyONTRawTransaction(wrapper openwallet.Wa
 	}
 
 	return nil
+}
+
+//CreateSummaryRawTransactionWithError 创建汇总交易，返回能原始交易单数组（包含带错误的原始交易单）
+func (decoder *TransactionDecoder) CreateSummaryRawTransactionWithError(wrapper openwallet.WalletDAI, sumRawTx *openwallet.SummaryRawTransaction) ([]*openwallet.RawTransactionWithError, error) {
+	raTxWithErr := make([]*openwallet.RawTransactionWithError, 0)
+	rawTxs, err := decoder.CreateSummaryRawTransaction(wrapper, sumRawTx)
+	if err != nil {
+		return nil, err
+	}
+	for _, tx := range rawTxs {
+		raTxWithErr = append(raTxWithErr, &openwallet.RawTransactionWithError{
+			RawTx: tx,
+			Error: nil,
+		})
+	}
+	return raTxWithErr, nil
 }
 
 func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwallet.WalletDAI, sumRawTx *openwallet.SummaryRawTransaction) ([]*openwallet.RawTransaction, error) {

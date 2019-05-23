@@ -54,6 +54,7 @@ func (this *RpcClient) sendRpcRequest(qid, method string, params []interface{}) 
 		Method:  method,
 		Params:  params,
 	}
+
 	data, err := json.Marshal(rpcReq)
 	if err != nil {
 		return nil, fmt.Errorf("JsonRpcRequest json.Marsha error:%s", err)
