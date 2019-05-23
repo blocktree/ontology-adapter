@@ -628,8 +628,7 @@ func (bs *ONTBlockScanner) extractTransaction(trx *Transaction, result *ExtractR
 					 ed.TxInputs = append(ed.TxInputs, &input)
 
 					 sourceKey1, ok1 := scanAddressFunc(notify.To)
-					 if ok1{
-						if sourceKey == sourceKey1{
+					 if ok1 && sourceKey == sourceKey1{
 							output := openwallet.TxOutPut{}
 							output.Received = true
 							output.TxID = trx.TxID
@@ -681,8 +680,7 @@ func (bs *ONTBlockScanner) extractTransaction(trx *Transaction, result *ExtractR
 							}
 							
 							ed.TxOutputs = append(ed.TxOutputs, &output)							
-						}
-						continue
+						
 					 }else{
 						output := openwallet.TxOutPut{}
 						output.Address = notify.To
