@@ -680,7 +680,7 @@ func (bs *ONTBlockScanner) extractTransaction(trx *Transaction, result *ExtractR
 							}
 							
 							ed.TxOutputs = append(ed.TxOutputs, &output)							
-						
+						continue
 					 }else{
 						output := openwallet.TxOutPut{}
 						output.Address = notify.To
