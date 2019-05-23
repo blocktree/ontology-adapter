@@ -626,9 +626,69 @@ func (bs *ONTBlockScanner) extractTransaction(trx *Transaction, result *ExtractR
 					}		
 					
 					 ed.TxInputs = append(ed.TxInputs, &input)
-					 output := openwallet.TxOutPut{}
-					 output.Address = notify.To
-					 ed.TxOutputs = append(ed.TxOutputs,&output)
+
+					 sourceKey1, ok1 := scanAddressFunc(notify.To)
+					 if ok1{
+						if sourceKey == sourceKey1{
+							output := openwallet.TxOutPut{}
+							output.Received = true
+							output.TxID = trx.TxID
+							output.Address = notify.To
+							output.Symbol = bs.wm.Symbol()
+							output.Amount = notify.Amount
+							if notify.ContractAddress == ontologyTransaction.ONTContractAddress{
+								output.Coin = openwallet.Coin{
+												Symbol:     bs.wm.Symbol(),
+												IsContract: true,
+												ContractID: openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONTContractAddress),
+												Contract:openwallet.SmartContract{
+													ContractID:openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONTContractAddress),
+													Symbol:bs.wm.Symbol(),
+													Address:ontologyTransaction.ONTContractAddress,
+													Token:"ONT",
+													Name:bs.wm.FullName(),
+													Decimals:0,
+												},
+											}
+							}else if notify.ContractAddress == ontologyTransaction.ONGContractAddress{
+								output.Coin = openwallet.Coin{
+									Symbol:     bs.wm.Symbol(),
+									IsContract: true,
+									ContractID: openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONGContractAddress),
+									Contract:openwallet.SmartContract{
+										ContractID:openwallet.GenContractID(bs.wm.Symbol(), ontologyTransaction.ONGContractAddress),
+										Symbol:bs.wm.Symbol(),
+										Address:ontologyTransaction.ONGContractAddress,
+										Token:"ONG",
+										Name:bs.wm.FullName(),
+										Decimals:9,
+									},
+								}
+							}else{
+								//
+							}
+							output.Index = 0
+							output.Sid = openwallet.GenTxOutPutSID(trx.TxID, output.Coin.Symbol, output.Coin.Contract.Address, 0)
+							output.CreateAt = createAt
+							output.BlockHeight = trx.BlockHeight
+							output.BlockHash = trx.BlockHash
+		
+							ed := result.extractData[sourceKey]
+							
+							if ed == nil{
+								ed = openwallet.NewBlockExtractData()
+								result.extractData[sourceKey] = ed
+							}
+							
+							ed.TxOutputs = append(ed.TxOutputs, &output)							
+						}
+						continue
+					 }else{
+						output := openwallet.TxOutPut{}
+						output.Address = notify.To
+						ed.TxOutputs = append(ed.TxOutputs,&output)
+					 }
+
 				}
 
 				sourceKey, ok = scanAddressFunc(notify.To)
@@ -719,12 +779,29 @@ func modifyExtractData(data *openwallet.TxExtractData)[]*openwallet.TxExtractDat
 			}
 			tx.WxID = openwallet.GenTransactionWxID(tx)
 			ed.Transaction = tx
-		}else{
+		}else if data.TxOutputs[index].Symbol == ""{
 			ed.TxInputs = append(ed.TxInputs, data.TxInputs[index])
 			tx := &openwallet.Transaction{
 				From:        []string{data.TxInputs[index].Address + ":" + data.TxInputs[index].Amount},
 				To:          []string{data.TxOutputs[index].Address + ":" + data.TxInputs[index].Amount},
 				Amount:      data.TxInputs[index].Amount,
+				Fees:        "0",
+				Coin:        data.TxInputs[index].Coin,
+				BlockHash:   data.TxInputs[index].BlockHash,
+				BlockHeight: data.TxInputs[index].BlockHeight,
+				TxID:        data.TxInputs[index].TxID,
+				Decimal:     0,
+				Status:      "1",
+			}
+			tx.WxID = openwallet.GenTransactionWxID(tx)
+			ed.Transaction = tx
+		}else{
+			ed.TxInputs = append(ed.TxInputs, data.TxInputs[index])
+			ed.TxOutputs = append(ed.TxOutputs, data.TxOutputs[index])
+			tx := &openwallet.Transaction{
+				From:        []string{data.TxInputs[index].Address + ":" + data.TxInputs[index].Amount},
+				To:          []string{data.TxOutputs[index].Address + ":" + data.TxInputs[index].Amount},
+				Amount:      "0",
 				Fees:        "0",
 				Coin:        data.TxInputs[index].Coin,
 				BlockHash:   data.TxInputs[index].BlockHash,

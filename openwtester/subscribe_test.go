@@ -61,7 +61,7 @@ func TestSubscribeAddress(t *testing.T) {
 		accountID  = "W4VUMN3wxQcwVEwsRvoyuhrJ95zhyc4zRW"
 		addrs      = map[string]string{
 			"AUJr6B9FZgFqSw5dDVS6jSsVLVbGnzZCGt": accountID,
-			//"AQ9FxqKbXnZTqf22zy2NFcXhi13fipg48S": accountID,
+			"AMEMKbmLwgEY8tCzJo7rHXdMbULhBsnpTk": accountID,
 		}
 	)
 
