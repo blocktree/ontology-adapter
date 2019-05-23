@@ -119,12 +119,19 @@ func testSubmitTransactionStep(tm *openw.WalletManager, rawTx *openwallet.RawTra
 
 func TestTransfer_ONT(t *testing.T) {
 	tm := testInitWalletManager()
-	walletID := "W5TnXcpuvK2zoJCCdN7YaHayh2EdCpdHWQ"
-	accountID := "8Eu54RRVyq6SApMh5EMgYEYg5Q4F53UFuP5J45jBn2t5"
-	to := "AW2dJUGzT14geN3as5hgRxrBCHwYXCkcCm"
+	//walletID := "W5TnXcpuvK2zoJCCdN7YaHayh2EdCpdHWQ"
+	//accountID := "8Eu54RRVyq6SApMh5EMgYEYg5Q4F53UFuP5J45jBn2t5"
+	//to := "AW2dJUGzT14geN3as5hgRxrBCHwYXCkcCm"
+
+	walletID := "WDsEFTdwHqRxSfwTGQm1j2an8M6Q6zp7qX"
+	accountID := "3rdEvmbQk8YDmur5yubWuZozj6qwmPSNVGcZRWqfszLy"
+	to := "AK9xbPMDLfyJWCZjL1daQcGnNoFkAh4N6v"
+
+	//accountID := "8E9ytsk2fyyKbpYE6hKTG6UzAW3YZwRm5QaVHAc92kNn"
+	//to := "AH6XoEEE5cm21UoGBixYtV9DoNTLM6UzYa"
 
 	contract := openwallet.SmartContract{
-		ContractID: "0100000000000000000000000000000000000000",
+		//ContractID: "0100000000000000000000000000000000000000",
 		Address:    "0100000000000000000000000000000000000000",
 		Symbol:     "ONT",
 		Name:       "ontology",

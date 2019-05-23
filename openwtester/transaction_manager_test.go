@@ -105,8 +105,8 @@ func TestWalletManager_GetTransactionByWxID(t *testing.T) {
 
 func TestWalletManager_GetAssetsAccountBalance(t *testing.T) {
 	tm := testInitWalletManager()
-	walletID := "WGqq1apvBWXGsxnYtLr5JbeAWcfxUc96VS"
-	accountID := "CSHjefYb4BePiovVq9Kjv9ewkh7iQgWHHP4EqqMtaUDw"
+	walletID := "WDsEFTdwHqRxSfwTGQm1j2an8M6Q6zp7qX"
+	accountID := "3rdEvmbQk8YDmur5yubWuZozj6qwmPSNVGcZRWqfszLy"
 
 	balance, err := tm.GetAssetsAccountBalance(testApp, walletID, accountID)
 	if err != nil {
@@ -118,23 +118,38 @@ func TestWalletManager_GetAssetsAccountBalance(t *testing.T) {
 
 func TestWalletManager_GetAssetsAccountTokenBalance(t *testing.T) {
 	tm := testInitWalletManager()
-	walletID := "WEqcj8FDLvf3uAS44ChEutM6oUbmgN23bf"
-	accountID := "GVK6daCGmqKHfe2zEbpixarAJ9HEqawyAm9jFvmqU59Q"
+	walletID := "WDsEFTdwHqRxSfwTGQm1j2an8M6Q6zp7qX"
+	accountID := "3rdEvmbQk8YDmur5yubWuZozj6qwmPSNVGcZRWqfszLy"
 
-	contract := openwallet.SmartContract{
-		Address:  "f2033ede578e17fa6231047265010445bca8cf1c",
-		Symbol:   "QTUM",
-		Name:     "QCASH",
-		Token:    "QC",
-		Decimals: 8,
+	contractONT := openwallet.SmartContract{
+		Address:  "0100000000000000000000000000000000000000",
+		Symbol:   "ONT",
+		Name:     "ONT",
+		Token:    "ONT",
+		Decimals: 0,
 	}
 
-	balance, err := tm.GetAssetsAccountTokenBalance(testApp, walletID, accountID, contract)
+	balanceONT, err := tm.GetAssetsAccountTokenBalance(testApp, walletID, accountID, contractONT)
 	if err != nil {
 		log.Error("GetAssetsAccountTokenBalance failed, unexpected error:", err)
 		return
 	}
-	log.Info("balance:", balance.Balance)
+	log.Info("ont balance:", balanceONT.Balance)
+
+	contractONG := openwallet.SmartContract{
+		Address:  "0200000000000000000000000000000000000000",
+		Symbol:   "ONT",
+		Name:     "ONG",
+		Token:    "ONG",
+		Decimals: 0,
+	}
+
+	balanceONG, err := tm.GetAssetsAccountTokenBalance(testApp, walletID, accountID, contractONG)
+	if err != nil {
+		log.Error("GetAssetsAccountTokenBalance failed, unexpected error:", err)
+		return
+	}
+	log.Info("ong balance:", balanceONG.Balance)
 }
 
 func TestWalletManager_GetEstimateFeeRate(t *testing.T) {
