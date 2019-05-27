@@ -256,7 +256,7 @@ func (bs *ONTBlockScanner) ScanBlock(height uint64) error {
 
 	block,err := bs.scanBlock(height)
 	if err != nil{
-		return nil
+		return err
 	}
 	bs.newBlockNotify(block ,false)
 	return nil
