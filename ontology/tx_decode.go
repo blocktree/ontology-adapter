@@ -852,3 +852,20 @@ func (decoder *TransactionDecoder) createRawTransaction(wrapper openwallet.Walle
 
 	return nil
 }
+
+func (decoder *TransactionDecoder) GetRawTransactionFeeRate() (feeRate string, unit string, err error) {
+	var (
+		gasPrice = decoder.wm.Config.GasPriceFixed
+		gasLimit = decoder.wm.Config.GasLimit
+	)
+	if decoder.wm.Config.GasPriceType == 0 {
+		gasPrice = decoder.wm.Config.GasPriceFixed
+	} else {
+		gasPrice, err = decoder.wm.RPCClient.getGasPrice()
+		if err != nil {
+			return "", "", err
+		}
+	}
+
+	return convertToAmount(gasLimit * gasPrice), "TX", nil
+}
