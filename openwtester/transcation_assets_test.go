@@ -118,6 +118,14 @@ func testSubmitTransactionStep(tm *openw.WalletManager, rawTx *openwallet.RawTra
 }
 
 func TestTransfer_ONT(t *testing.T) {
+
+	//AGQHruK4xneV7cx7nY1X3GvZ7rTAZNfm5F
+	//AK9xbPMDLfyJWCZjL1daQcGnNoFkAh4N6v
+	//ASixSRsz1pa1SoPbENUrT5XSC1Mz6fqBtA
+	//AVp5xHQDweK2AYVdquue1ay9UjhnLiKRCQ
+	//AZjb76TiRWuZf8rwev1B4xaUEb1GgeKtBT
+	//Ac3Sf1wQaUqrNAnt2nD2jUz122a8yskmkc
+
 	tm := testInitWalletManager()
 	//walletID := "W5TnXcpuvK2zoJCCdN7YaHayh2EdCpdHWQ"
 	//accountID := "8Eu54RRVyq6SApMh5EMgYEYg5Q4F53UFuP5J45jBn2t5"
@@ -125,7 +133,7 @@ func TestTransfer_ONT(t *testing.T) {
 
 	walletID := "WDsEFTdwHqRxSfwTGQm1j2an8M6Q6zp7qX"
 	accountID := "3rdEvmbQk8YDmur5yubWuZozj6qwmPSNVGcZRWqfszLy"
-	to := "AK9xbPMDLfyJWCZjL1daQcGnNoFkAh4N6v"
+	to := "AVp5xHQDweK2AYVdquue1ay9UjhnLiKRCQ"
 
 	//accountID := "8E9ytsk2fyyKbpYE6hKTG6UzAW3YZwRm5QaVHAc92kNn"
 	//to := "AH6XoEEE5cm21UoGBixYtV9DoNTLM6UzYa"
@@ -166,10 +174,22 @@ func TestTransfer_ONT(t *testing.T) {
 }
 
 func TestTransfer_ONG(t *testing.T) {
+
+	//AGQHruK4xneV7cx7nY1X3GvZ7rTAZNfm5F
+	//AK9xbPMDLfyJWCZjL1daQcGnNoFkAh4N6v
+	//ASixSRsz1pa1SoPbENUrT5XSC1Mz6fqBtA
+	//AVp5xHQDweK2AYVdquue1ay9UjhnLiKRCQ
+	//AZjb76TiRWuZf8rwev1B4xaUEb1GgeKtBT
+	//Ac3Sf1wQaUqrNAnt2nD2jUz122a8yskmkc
+
 	tm := testInitWalletManager()
-	walletID := "W5TnXcpuvK2zoJCCdN7YaHayh2EdCpdHWQ"
-	accountID := "8Eu54RRVyq6SApMh5EMgYEYg5Q4F53UFuP5J45jBn2t5"
-	to := "AW2dJUGzT14geN3as5hgRxrBCHwYXCkcCm"
+	//walletID := "W5TnXcpuvK2zoJCCdN7YaHayh2EdCpdHWQ"
+	//accountID := "8Eu54RRVyq6SApMh5EMgYEYg5Q4F53UFuP5J45jBn2t5"
+	//to := "AW2dJUGzT14geN3as5hgRxrBCHwYXCkcCm"
+
+	walletID := "WDsEFTdwHqRxSfwTGQm1j2an8M6Q6zp7qX"
+	accountID := "3rdEvmbQk8YDmur5yubWuZozj6qwmPSNVGcZRWqfszLy"
+	to := "AVp5xHQDweK2AYVdquue1ay9UjhnLiKRCQ"
 
 	contract := openwallet.SmartContract{
 		ContractID: "0200000000000000000000000000000000000000",
@@ -184,7 +204,7 @@ func TestTransfer_ONG(t *testing.T) {
 
 	testGetAssetsAccountTokenBalance(tm, walletID, accountID, contract)
 
-	rawTx, err := testCreateTransactionStep(tm, walletID, accountID, to, "0.01", "", &contract)
+	rawTx, err := testCreateTransactionStep(tm, walletID, accountID, to, "0.2", "", &contract)
 	if err != nil {
 		return
 	}
@@ -252,11 +272,11 @@ func TestSummary_ONG(t *testing.T) {
 
 func TestSummary_ONT(t *testing.T) {
 	tm := testInitWalletManager()
-	walletID := "W5TnXcpuvK2zoJCCdN7YaHayh2EdCpdHWQ"
-	accountID := "8Eu54RRVyq6SApMh5EMgYEYg5Q4F53UFuP5J45jBn2t5"
-	summaryAddress := "AMEMKbmLwgEY8tCzJo7rHXdMbULhBsnpTk"
+	walletID := "WDsEFTdwHqRxSfwTGQm1j2an8M6Q6zp7qX"
+	accountID := "8E9ytsk2fyyKbpYE6hKTG6UzAW3YZwRm5QaVHAc92kNn"
+	summaryAddress := "AH6XoEEE5cm21UoGBixYtV9DoNTLM6UzYa"
 	contract := openwallet.SmartContract{
-		ContractID: "0100000000000000000000000000000000000000",
+		//ContractID: "0100000000000000000000000000000000000000",
 		Address:    "0100000000000000000000000000000000000000",
 		Symbol:     "ONT",
 		Name:       "ontology",
