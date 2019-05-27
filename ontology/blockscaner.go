@@ -126,6 +126,7 @@ func (bs *ONTBlockScanner) ScanBlockTask() {
 
 		//获取最大高度
 		maxHeight, err := bs.wm.GetBlockHeight()
+		maxHeight--
 		if err != nil {
 			//下一个高度找不到会报异常
 			log.Std.Info("block scanner can not get rpc-server block height; unexpected error: %v", err)
@@ -1262,27 +1263,40 @@ func (bs *ONTBlockScanner) GetBalanceByAddress(address ...string) ([]*openwallet
 
 }
 
-func (bs *ONTBlockScanner) GetBalanceByAddressAndContract(fee *big.Int,contractID string,address ...string) ([]*openwallet.Balance, error) {
+func (bs *ONTBlockScanner) GetBalanceByAddressAndContract(fee *big.Int,contractID string,address ...string) ([]*openwallet.Balance, []bool,error) {
 
 	addrsBalance := make([]*openwallet.Balance, 0)
-
+	feeEnough := make([]bool,0)
 	for _, addr := range address {
 		balance, err := bs.wm.RPCClient.getBalance(addr)
 		if err != nil {
-			return nil, err
+			return nil, nil,err
 		}
 
 		balanceStr := ""
 		symbol := ""
 		if contractID == ontologyTransaction.ONTContractAddress{
 			balanceStr = balance.ONTBalance.String()
+			if balanceStr == "0"{
+				continue
+			}
 			symbol = "ONT"
 			if balance.ONGBalance.Cmp(fee) < 0{
-				return nil,errors.New("No enough ONG(fee) to summary ONT on address: " + addr)
+				feeEnough =append(feeEnough,false)
+			}else{
+				feeEnough =append(feeEnough,true)
 			}
 		}else if contractID == ontologyTransaction.ONGContractAddress{
 			balanceStr = balance.ONGBalance.String()
+			if balanceStr == "0"{
+				continue
+			}
 			symbol = "ONG"
+			if balance.ONGBalance.Cmp(fee) < 0{
+				feeEnough =append(feeEnough,false)
+			}else{
+				feeEnough =append(feeEnough,true)
+			}
 		}else{
 			//
 		}
@@ -1294,7 +1308,7 @@ func (bs *ONTBlockScanner) GetBalanceByAddressAndContract(fee *big.Int,contractI
 		})
 	}
 
-	return addrsBalance, nil
+	return addrsBalance,feeEnough, nil
 
 }
 

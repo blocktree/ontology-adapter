@@ -22,7 +22,8 @@ var (
 func init() {
 
 	tw = NewWalletManager()
+	tw.RPCClient = NewRpcClient("http://127.0.0.1:20336")
 
-	tw.RPCClient = NewRpcClient("http://192.168.27.124:20006")
+	// tw.RPCClient = NewRpcClient("http://192.168.27.124:20006")
 
 }

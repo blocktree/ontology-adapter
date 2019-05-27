@@ -45,7 +45,7 @@ func TestWalletManager_GetWalletInfo(t *testing.T) {
 
 	tm := testInitWalletManager()
 
-	wallet, err := tm.GetWalletInfo(testApp, "W5TnXcpuvK2zoJCCdN7YaHayh2EdCpdHWQ")
+	wallet, err := tm.GetWalletInfo(testApp, "WMNYyUffg3P2HxbksXnmhkDA73uDX4MFKz")
 	if err != nil {
 		log.Error("unexpected error:", err)
 		return
@@ -74,7 +74,7 @@ func TestWalletManager_CreateAssetsAccount(t *testing.T) {
 
 	tm := testInitWalletManager()
 
-	walletID := "W5TnXcpuvK2zoJCCdN7YaHayh2EdCpdHWQ"
+	walletID := "WMNYyUffg3P2HxbksXnmhkDA73uDX4MFKz"
 	account := &openwallet.AssetsAccount{Alias: "mainnetONT", WalletID: walletID, Required: 1, Symbol: "ONT", IsTrust: true}
 	account, address, err := tm.CreateAssetsAccount(testApp, walletID, "12345678", account, nil)
 	if err != nil {
@@ -92,7 +92,7 @@ func TestWalletManager_GetAssetsAccountList(t *testing.T) {
 
 	tm := testInitWalletManager()
 
-	walletID := "W5TnXcpuvK2zoJCCdN7YaHayh2EdCpdHWQ"
+	walletID := "WMNYyUffg3P2HxbksXnmhkDA73uDX4MFKz"
 	list, err := tm.GetAssetsAccountList(testApp, walletID, 0, 10000000)
 	if err != nil {
 		log.Error("unexpected error:", err)
@@ -111,9 +111,9 @@ func TestWalletManager_CreateAddress(t *testing.T) {
 
 	tm := testInitWalletManager()
 
-	walletID := "W5TnXcpuvK2zoJCCdN7YaHayh2EdCpdHWQ"
-	accountID := "8Eu54RRVyq6SApMh5EMgYEYg5Q4F53UFuP5J45jBn2t5"
-	address, err := tm.CreateAddress(testApp, walletID, accountID, 1)
+	walletID := "WMNYyUffg3P2HxbksXnmhkDA73uDX4MFKz"
+	accountID := "2HTnrBSFvZZnFeSXFinbfH1zvxojyXBjhnSN5CyznyzB"
+	address, err := tm.CreateAddress(testApp, walletID, accountID, 3)
 	if err != nil {
 		log.Error(err)
 		return
@@ -128,8 +128,8 @@ func TestWalletManager_GetAddressList(t *testing.T) {
 
 	tm := testInitWalletManager()
 
-	walletID := "W5TnXcpuvK2zoJCCdN7YaHayh2EdCpdHWQ"
-	accountID := "8Eu54RRVyq6SApMh5EMgYEYg5Q4F53UFuP5J45jBn2t5"
+	walletID := "WMNYyUffg3P2HxbksXnmhkDA73uDX4MFKz"
+	accountID := "2HTnrBSFvZZnFeSXFinbfH1zvxojyXBjhnSN5CyznyzB"
 	list, err := tm.GetAddressList(testApp, walletID, accountID, 0, -1, false)
 	if err != nil {
 		log.Error("unexpected error:", err)
