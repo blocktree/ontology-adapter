@@ -18,6 +18,7 @@ package ontology
 import (
 	"errors"
 	"path/filepath"
+	"strings"
 
 	"github.com/blocktree/openwallet/hdkeystore"
 	"github.com/blocktree/openwallet/log"
@@ -103,5 +104,6 @@ func (wm *WalletManager) sendRawTransactionByRest(txHex string) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	return string(txid), nil
+
+	return strings.Trim(string(txid), "\""), nil
 }
