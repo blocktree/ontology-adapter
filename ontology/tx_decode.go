@@ -25,14 +25,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/blocktree/go-owcdrivers/btcTransaction"
 	"github.com/blocktree/go-owcdrivers/ontologyTransaction"
 	"github.com/blocktree/openwallet/log"
 	"github.com/blocktree/openwallet/openwallet"
 )
 
 type TransactionDecoder struct {
-	openwallet.TransactionDecoderBase
+	*openwallet.TransactionDecoderBase
 	wm *WalletManager //钱包管理者
 }
 
@@ -295,15 +294,11 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 	} else {
 		// other token
 	}
-	emptyTrans, err := ontologyTransaction.CreateEmptyRawTransaction(gasPrice, gasLimit, txState)
+	emptyTrans, transHash, err := ontologyTransaction.CreateRawTransactionAndHash(gasPrice, gasLimit, txState)
 	if err != nil {
 		return err
 	}
 
-	transHash, err := ontologyTransaction.CreateRawTransactionHashForSig(emptyTrans)
-	if err != nil {
-		return err
-	}
 	rawTx.RawHex = emptyTrans
 
 	if rawTx.Signatures == nil {
@@ -312,18 +307,20 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 
 	keySigs := make([]*openwallet.KeySignature, 0)
 
-	addr, err := wrapper.GetAddress(transHash.GetNormalTxAddress())
-	if err != nil {
-		return err
-	}
-	signature := openwallet.KeySignature{
-		EccType: decoder.wm.Config.CurveType,
-		Nonce:   "",
-		Address: addr,
-		Message: transHash.GetTxHashHex(),
-	}
+	for _, address := range transHash.Addresses {
+		addr, err := wrapper.GetAddress(address)
+		if err != nil {
+			return err
+		}
+		signature := openwallet.KeySignature{
+			EccType: decoder.wm.Config.CurveType,
+			Nonce:   "",
+			Address: addr,
+			Message: transHash.GetTxHashHex(),
+		}
 
-	keySigs = append(keySigs, &signature)
+		keySigs = append(keySigs, &signature)
+	}
 
 	rawTx.Signatures[rawTx.Account.AccountID] = keySigs
 
@@ -350,22 +347,15 @@ func (decoder *TransactionDecoder) SignONTRawTransaction(wrapper openwallet.Wall
 			if err != nil {
 				return err
 			}
-			log.Debug("privateKey:", hex.EncodeToString(keyBytes))
+			// log.Debug("privateKey:", hex.EncodeToString(keyBytes))
 
-			//privateKeys = append(privateKeys, keyBytes)
-			txHash := ontologyTransaction.TxHash{
-				Hash: keySignature.Message,
-				Normal: &ontologyTransaction.NormalTx{
-					Address: keySignature.Address.Address,
-					SigType: btcTransaction.SigHashAll,
-				},
-			}
+			// //privateKeys = append(privateKeys, keyBytes)
 
-			log.Debug("hash:", txHash.GetTxHashHex())
+			// log.Debug("hash:", txHash.GetTxHashHex())
 
 			//签名交易
 			/////////交易单哈希签名
-			sigPub, err := ontologyTransaction.SignRawTransactionHash(txHash.GetTxHashHex(), keyBytes)
+			sigPub, err := ontologyTransaction.SignRawTransactionHash(keySignature.Message, keyBytes)
 			if err != nil {
 				return fmt.Errorf("transaction hash sign failed, unexpected error: %v", err)
 			} else {
@@ -395,11 +385,12 @@ func (decoder *TransactionDecoder) VerifyONTRawTransaction(wrapper openwallet.Wa
 
 	var (
 		emptyTrans = rawTx.RawHex
-		transHash  = make([]ontologyTransaction.TxHash, 0)
+		sigPubs    = make([]ontologyTransaction.SigPub, 0)
 	)
 
 	for accountID, keySignatures := range rawTx.Signatures {
 		log.Debug("accountID Signatures:", accountID)
+
 		for _, keySignature := range keySignatures {
 
 			signature, _ := hex.DecodeString(keySignature.Signature)
@@ -410,30 +401,17 @@ func (decoder *TransactionDecoder) VerifyONTRawTransaction(wrapper openwallet.Wa
 				PublicKey: pubkey,
 			}
 
-			//sigPub = append(sigPub, signaturePubkey)
-
-			txHash := ontologyTransaction.TxHash{
-				Hash: keySignature.Message,
-				Normal: &ontologyTransaction.NormalTx{
-					Address: keySignature.Address.Address,
-					SigType: btcTransaction.SigHashAll,
-					SigPub:  signaturePubkey,
-				},
-			}
-
-			transHash = append(transHash, txHash)
+			sigPubs = append(sigPubs, signaturePubkey)
 
 			log.Debug("Signature:", keySignature.Signature)
 			log.Debug("PublicKey:", keySignature.Address.PublicKey)
 		}
 	}
 
-	signedTrans, err := ontologyTransaction.InsertSignatureIntoEmptyTransaction(emptyTrans, transHash[0].Normal.SigPub)
+	pass, signedTrans, err := ontologyTransaction.VerifyAndCombineRawTransaction(emptyTrans, sigPubs)
 	if err != nil {
 		return fmt.Errorf("transaction compose signatures failed")
 	}
-
-	pass := ontologyTransaction.VerifyRawTransaction(signedTrans)
 
 	if pass {
 		log.Debug("transaction verify passed")
@@ -447,6 +425,44 @@ func (decoder *TransactionDecoder) VerifyONTRawTransaction(wrapper openwallet.Wa
 	return nil
 }
 
+//CreateSummaryRawTransactionWithError 创建汇总交易，返回能原始交易单数组（包含带错误的原始交易单）
+func (decoder *TransactionDecoder) CreateSummaryRawTransactionWithError(wrapper openwallet.WalletDAI, sumRawTx *openwallet.SummaryRawTransaction) ([]*openwallet.RawTransactionWithError, error) {
+	raTxWithErr := make([]*openwallet.RawTransactionWithError, 0)
+	rawTxs, err := decoder.CreateSummaryRawTransaction(wrapper, sumRawTx)
+	if err != nil {
+		return nil, err
+	}
+	for _, tx := range rawTxs {
+		raTxWithErr = append(raTxWithErr, &openwallet.RawTransactionWithError{
+			RawTx: tx,
+			Error: nil,
+		})
+	}
+	return raTxWithErr, nil
+}
+
+type feeSupport struct {
+	address string
+	amount  int64
+}
+
+type feeSupports struct {
+	fs []feeSupport
+}
+
+func (fs feeSupports) getFeeAddress(amount int64) string {
+	address := ""
+	payed := int64(0)
+	for index := 0; index < len(fs.fs); index++ {
+		payed += fs.fs[index].amount
+		if payed >= amount {
+			address = fs.fs[index].address
+		}
+	}
+
+	return address
+}
+
 func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwallet.WalletDAI, sumRawTx *openwallet.SummaryRawTransaction) ([]*openwallet.RawTransaction, error) {
 	var (
 		rawTxArray      = make([]*openwallet.RawTransaction, 0)
@@ -456,11 +472,23 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 
 		gasPrice = ontologyTransaction.DefaultGasPrice
 		gasLimit = ontologyTransaction.DefaultGasLimit
-		err      error
+
+		feesSupportAccount *openwallet.AssetsAccount
+		err                error
 		// txState  ontologyTransaction.TxState
 		// gasPrice = ontologyTransaction.DefaultGasPrice
 		// gasLimit = ontologyTransaction.DefaultGasLimit
 	)
+
+	// 如果有提供手续费账户，检查账户是否存在
+	if feesAcount := sumRawTx.FeesSupportAccount; feesAcount != nil {
+		account, supportErr := wrapper.GetAssetsAccountInfo(feesAcount.AccountID)
+		if supportErr != nil {
+			return nil, openwallet.Errorf(openwallet.ErrAccountNotFound, "can not find fees support account")
+		}
+
+		feesSupportAccount = account
+	}
 
 	if sumRawTx.FeeRate != "" {
 		feeprice, err := convertIntStringToBigInt(sumRawTx.FeeRate)
@@ -478,20 +506,30 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 			}
 		}
 	}
-	if sumRawTx.Coin.ContractID == ontologyTransaction.ONGContractAddress {
+	if sumRawTx.Coin.Contract.Address == ontologyTransaction.ONGContractAddress {
 		minTransfer = big.NewInt(int64(convertFromAmount(sumRawTx.MinTransfer)))
 		retainedBalance = big.NewInt(int64(convertFromAmount(sumRawTx.RetainedBalance)))
-	} else if sumRawTx.Coin.ContractID == ontologyTransaction.ONTContractAddress {
-		mt, err := strconv.ParseInt(sumRawTx.MinTransfer, 10, 64)
-		if err != nil {
-			return nil, errors.New("minTransfer invalid!")
+	} else if sumRawTx.Coin.Contract.Address == ontologyTransaction.ONTContractAddress {
+		if sumRawTx.MinTransfer == "" {
+			minTransfer = big.NewInt(0)
+		} else {
+			mt, err := strconv.ParseInt(sumRawTx.MinTransfer, 10, 64)
+			if err != nil {
+				return nil, errors.New("minTransfer invalid!")
+			}
+			minTransfer = big.NewInt(mt)
 		}
-		minTransfer = big.NewInt(mt)
-		rb, err := strconv.ParseInt(sumRawTx.RetainedBalance, 10, 64)
-		if err != nil {
-			return nil, errors.New("minTransfer invalid!")
+
+		if sumRawTx.RetainedBalance == "" {
+			retainedBalance = big.NewInt(0)
+		} else {
+			rb, err := strconv.ParseInt(sumRawTx.RetainedBalance, 10, 64)
+			if err != nil {
+				return nil, errors.New("minTransfer invalid!")
+			}
+			retainedBalance = big.NewInt(rb)
 		}
-		retainedBalance = big.NewInt(rb)
+
 	} else {
 		//
 	}
@@ -518,14 +556,51 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 		searchAddrs = append(searchAddrs, address.Address)
 	}
 
-	addrBalanceArray, err := decoder.wm.Blockscanner.GetBalanceByAddressAndContract(fee, sumRawTx.Coin.ContractID, searchAddrs...) //GetBalanceByAddress(searchAddrs...)
+	addrBalanceArray, feeEnough, err := decoder.wm.Blockscanner.GetBalanceByAddressAndContract(fee, sumRawTx.Coin.ContractID, searchAddrs...) //GetBalanceByAddress(searchAddrs...)
 	if err != nil {
 		return nil, err
 	}
+	extraFee := int64(0)
+	for _, enough := range feeEnough {
+		if !enough {
+			extraFee++
+		}
+	}
 
-	for _, addrBalance := range addrBalanceArray {
+	feeSupports := feeSupports{}
 
-		if sumRawTx.Coin.ContractID == ontologyTransaction.ONGContractAddress {
+	if extraFee != 0 && feesSupportAccount == nil {
+		return nil, fmt.Errorf("[%s] have not enough ONG to pay summary fees", accountID)
+	} else if feesSupportAccount != nil {
+		feeSupportAddresses, err := wrapper.GetAddressList(0, 2000, "AccountID", feesSupportAccount.AccountID)
+
+		if err != nil {
+			return nil, fmt.Errorf("Failed to get fee support account!")
+		}
+
+		if len(feeSupportAddresses) == 0 {
+			return nil, fmt.Errorf("No addresses found in fee support account!")
+		}
+
+		ongContains := big.NewInt(0)
+		for _, addr := range feeSupportAddresses {
+			balance, err := decoder.wm.RPCClient.getBalance(addr.Address)
+
+			if err != nil {
+				return nil, err
+			}
+			ongContains.Add(ongContains, balance.ONGBalance)
+			feeSupports.fs = append(feeSupports.fs, feeSupport{address: addr.Address, amount: balance.ONGBalance.Int64()})
+		}
+
+		if ongContains.Int64() < extraFee*int64(gasLimit*gasPrice) {
+			return nil, fmt.Errorf("No enough ONG found in fee support account!")
+		}
+	}
+	feeExtra := int64(0)
+	for i, addrBalance := range addrBalanceArray {
+
+		if sumRawTx.Coin.Contract.Address == ontologyTransaction.ONGContractAddress {
 			//
 			abbi, _ := strconv.ParseInt(addrBalance.Balance, 10, 64)
 			addrBalance_BI := big.NewInt(abbi)
@@ -548,27 +623,52 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 			//log.Debugf("balance: %v", addrBalance.Balance)
 			log.Debugf("fees: %v", fees)
 			log.Debugf("sumAmount: %v", sumAmount)
+			if feeEnough[i] {
+				//创建一笔交易单
+				rawTx := &openwallet.RawTransaction{
+					Coin:    sumRawTx.Coin,
+					Account: sumRawTx.Account,
+					To: map[string]string{
+						sumRawTx.SummaryAddress: sumAmount,
+					},
+					Required: 1,
+				}
+				createErr := decoder.createRawTransaction(
+					wrapper,
+					rawTx,
+					addrBalance,
+					"")
+				if createErr != nil {
+					return nil, createErr
+				}
 
-			//创建一笔交易单
-			rawTx := &openwallet.RawTransaction{
-				Coin:    sumRawTx.Coin,
-				Account: sumRawTx.Account,
-				To: map[string]string{
-					sumRawTx.SummaryAddress: sumAmount,
-				},
-				Required: 1,
-			}
-			createErr := decoder.createRawTransaction(
-				wrapper,
-				rawTx,
-				addrBalance)
-			if createErr != nil {
-				return nil, createErr
+				//创建成功，添加到队列
+				rawTxArray = append(rawTxArray, rawTx)
+			} else {
+				feeExtra += int64(gasLimit * gasPrice)
+				//创建一笔交易单
+				rawTx := &openwallet.RawTransaction{
+					Coin:    sumRawTx.Coin,
+					Account: sumRawTx.Account,
+					To: map[string]string{
+						sumRawTx.SummaryAddress: sumAmount,
+					},
+					Required: 1,
+				}
+				createErr := decoder.createRawTransaction(
+					wrapper,
+					rawTx,
+					addrBalance,
+					feeSupports.getFeeAddress(feeExtra))
+				if createErr != nil {
+					return nil, createErr
+				}
+
+				//创建成功，添加到队列
+				rawTxArray = append(rawTxArray, rawTx)
 			}
 
-			//创建成功，添加到队列
-			rawTxArray = append(rawTxArray, rawTx)
-		} else if sumRawTx.Coin.ContractID == ontologyTransaction.ONTContractAddress {
+		} else if sumRawTx.Coin.Contract.Address == ontologyTransaction.ONTContractAddress {
 			//检查余额是否超过最低转账
 			abbi, _ := strconv.ParseInt(addrBalance.Balance, 10, 64)
 			addrBalance_BI := big.NewInt(abbi)
@@ -586,34 +686,59 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 			log.Debugf("balance: %v", addrBalance.Balance)
 			log.Debugf("fees: %v", fees)
 			log.Debugf("sumAmount: %v", sumAmount)
+			if feeEnough[i] {
+				//创建一笔交易单
+				rawTx := &openwallet.RawTransaction{
+					Coin:    sumRawTx.Coin,
+					Account: sumRawTx.Account,
+					To: map[string]string{
+						sumRawTx.SummaryAddress: sumAmount,
+					},
+					Required: 1,
+				}
+				createErr := decoder.createRawTransaction(
+					wrapper,
+					rawTx,
+					addrBalance,
+					"")
+				if createErr != nil {
+					return nil, createErr
+				}
 
-			//创建一笔交易单
-			rawTx := &openwallet.RawTransaction{
-				Coin:    sumRawTx.Coin,
-				Account: sumRawTx.Account,
-				To: map[string]string{
-					sumRawTx.SummaryAddress: sumAmount,
-				},
-				Required: 1,
+				//创建成功，添加到队列
+				rawTxArray = append(rawTxArray, rawTx)
+			} else {
+				feeExtra += int64(gasLimit * gasPrice)
+
+				//创建一笔交易单
+				rawTx := &openwallet.RawTransaction{
+					Coin:    sumRawTx.Coin,
+					Account: feesSupportAccount,
+					To: map[string]string{
+						sumRawTx.SummaryAddress: sumAmount,
+					},
+					Required: 1,
+				}
+				createErr := decoder.createRawTransaction(
+					wrapper,
+					rawTx,
+					addrBalance,
+					feeSupports.getFeeAddress(feeExtra))
+				if createErr != nil {
+					return nil, createErr
+				}
+
+				//创建成功，添加到队列
+				rawTxArray = append(rawTxArray, rawTx)
 			}
 
-			createErr := decoder.createRawTransaction(
-				wrapper,
-				rawTx,
-				addrBalance)
-			if createErr != nil {
-				return nil, createErr
-			}
-
-			//创建成功，添加到队列
-			rawTxArray = append(rawTxArray, rawTx)
 		}
 
 	}
 	return rawTxArray, nil
 }
 
-func (decoder *TransactionDecoder) createRawTransaction(wrapper openwallet.WalletDAI, rawTx *openwallet.RawTransaction, addrBalance *openwallet.Balance) error {
+func (decoder *TransactionDecoder) createRawTransaction(wrapper openwallet.WalletDAI, rawTx *openwallet.RawTransaction, addrBalance *openwallet.Balance, payer string) error {
 	var (
 		txState  ontologyTransaction.TxState
 		gasPrice = ontologyTransaction.DefaultGasPrice
@@ -660,7 +785,7 @@ func (decoder *TransactionDecoder) createRawTransaction(wrapper openwallet.Walle
 		txState.AssetType = ontologyTransaction.AssetONG
 		txState.Amount = amount.Uint64()
 		txState.To = to
-
+		txState.Payer = payer
 		txState.From = addrBalance.Address
 
 	} else if rawTx.Coin.Contract.Address == ontologyTransaction.ONTContractAddress { // ONT transaction
@@ -671,7 +796,7 @@ func (decoder *TransactionDecoder) createRawTransaction(wrapper openwallet.Walle
 		txState.AssetType = ontologyTransaction.AssetONT
 		txState.Amount = amount.Uint64()
 		txState.To = to
-
+		txState.Payer = payer
 		txState.From = addrBalance.Address
 
 	} else { // other contract
@@ -692,15 +817,11 @@ func (decoder *TransactionDecoder) createRawTransaction(wrapper openwallet.Walle
 	} else {
 		// other token
 	}
-	emptyTrans, err := ontologyTransaction.CreateEmptyRawTransaction(gasPrice, gasLimit, txState)
+	emptyTrans, transHash, err := ontologyTransaction.CreateRawTransactionAndHash(gasPrice, gasLimit, txState)
 	if err != nil {
 		return err
 	}
 
-	transHash, err := ontologyTransaction.CreateRawTransactionHashForSig(emptyTrans)
-	if err != nil {
-		return err
-	}
 	rawTx.RawHex = emptyTrans
 
 	if rawTx.Signatures == nil {
@@ -708,19 +829,20 @@ func (decoder *TransactionDecoder) createRawTransaction(wrapper openwallet.Walle
 	}
 
 	keySigs := make([]*openwallet.KeySignature, 0)
+	for _, address := range transHash.Addresses {
+		addr, err := wrapper.GetAddress(address)
+		if err != nil {
+			return err
+		}
+		signature := openwallet.KeySignature{
+			EccType: decoder.wm.Config.CurveType,
+			Nonce:   "",
+			Address: addr,
+			Message: transHash.GetTxHashHex(),
+		}
 
-	addr, err := wrapper.GetAddress(transHash.GetNormalTxAddress())
-	if err != nil {
-		return err
+		keySigs = append(keySigs, &signature)
 	}
-	signature := openwallet.KeySignature{
-		EccType: decoder.wm.Config.CurveType,
-		Nonce:   "",
-		Address: addr,
-		Message: transHash.GetTxHashHex(),
-	}
-
-	keySigs = append(keySigs, &signature)
 
 	rawTx.Signatures[rawTx.Account.AccountID] = keySigs
 
@@ -729,4 +851,21 @@ func (decoder *TransactionDecoder) createRawTransaction(wrapper openwallet.Walle
 	rawTx.IsBuilt = true
 
 	return nil
+}
+
+func (decoder *TransactionDecoder) GetRawTransactionFeeRate() (feeRate string, unit string, err error) {
+	var (
+		gasPrice = decoder.wm.Config.GasPriceFixed
+		gasLimit = decoder.wm.Config.GasLimit
+	)
+	if decoder.wm.Config.GasPriceType == 0 {
+		gasPrice = decoder.wm.Config.GasPriceFixed
+	} else {
+		gasPrice, err = decoder.wm.RPCClient.getGasPrice()
+		if err != nil {
+			return "", "", err
+		}
+	}
+
+	return convertToAmount(gasLimit * gasPrice), "TX", nil
 }

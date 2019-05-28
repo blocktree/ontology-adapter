@@ -50,7 +50,7 @@ func NewWalletManager() *WalletManager {
 	wm.Decoder = NewAddressDecoder(&wm)
 	wm.TxDecoder = NewTransactionDecoder(&wm)
 	wm.ContractDecoder = NewContractDecoder(&wm)
-
+	wm.Log = log.NewOWLogger(Symbol)
 	//	wm.RPCClient = NewRpcClient("http://localhost:20336/")
 	return &wm
 }

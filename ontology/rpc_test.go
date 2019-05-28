@@ -65,7 +65,7 @@ func Test_getBlockHeightByRest(t *testing.T) {
 }
 
 func Test_getBlockHashByRest(t *testing.T) {
-	hash, err := tw.RPCClient.getBlockHash(1685)
+	hash, err := tw.RPCClient.getBlockHash(4066042)
 	if err != nil {
 		t.Error("get block hash failed!")
 	} else {
