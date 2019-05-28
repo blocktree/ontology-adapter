@@ -124,7 +124,7 @@ func TestTransfer_ONT(t *testing.T) {
 	to := "AW2dJUGzT14geN3as5hgRxrBCHwYXCkcCm"
 
 	contract := openwallet.SmartContract{
-		ContractID: "0100000000000000000000000000000000000000",
+		ContractID: "",
 		Address:    "0100000000000000000000000000000000000000",
 		Symbol:     "ONT",
 		Name:       "ontology",
@@ -165,7 +165,7 @@ func TestTransfer_ONG(t *testing.T) {
 	to := "AU4rGqqGMuQ6eicgAXxpFCiqQUTxz5YuDz"
 
 	contract := openwallet.SmartContract{
-		ContractID: "0200000000000000000000000000000000000000",
+		ContractID: "",
 		Address:    "0200000000000000000000000000000000000000",
 		Symbol:     "ONT",
 		Name:       "ontology",
@@ -206,7 +206,7 @@ func TestSummary_ONG(t *testing.T) {
 	//feeSupportAccountID := "7cNvUsvhnUTdduCD2iheyXgwb1zt1f7tWc8XF9q3DLXJ"
 	summaryAddress := "AMEMKbmLwgEY8tCzJo7rHXdMbULhBsnpTk"
 	contract := openwallet.SmartContract{
-		ContractID: "0200000000000000000000000000000000000000",
+		ContractID: "",
 		Address:    "0200000000000000000000000000000000000000",
 		Symbol:     "ONT",
 		Name:       "ontology",
@@ -250,7 +250,7 @@ func TestSummary_ONT(t *testing.T) {
 	accountID := "2HTnrBSFvZZnFeSXFinbfH1zvxojyXBjhnSN5CyznyzB"
 	summaryAddress := "AJZT7WkUZtK8dfBkxAiVzfgBHDihGyAWzh"
 	contract := openwallet.SmartContract{
-		ContractID: "0100000000000000000000000000000000000000",
+		ContractID: "",
 		Address:    "0100000000000000000000000000000000000000",
 		Symbol:     "ONT",
 		Name:       "ontology",

@@ -556,7 +556,7 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 		searchAddrs = append(searchAddrs, address.Address)
 	}
 
-	addrBalanceArray, feeEnough, err := decoder.wm.Blockscanner.GetBalanceByAddressAndContract(fee, sumRawTx.Coin.ContractID, searchAddrs...) //GetBalanceByAddress(searchAddrs...)
+	addrBalanceArray, feeEnough, err := decoder.wm.Blockscanner.GetBalanceByAddressAndContract(fee, sumRawTx.Coin.Contract.Address, searchAddrs...) //GetBalanceByAddress(searchAddrs...)
 	if err != nil {
 		return nil, err
 	}
