@@ -15,7 +15,7 @@ func Test_GetTokenBalanceByAddress(t *testing.T) {
 
 	contract := openwallet.SmartContract{
 		Symbol:     "ONT",
-		ContractID: ontologyTransaction.ONTContractAddress,
+		ContractID: "",
 	}
 
 	address1 := "AYmuoVvtCojm1F3ATMf2fNww3wBNvAxbi5"

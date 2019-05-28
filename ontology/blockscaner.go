@@ -1263,7 +1263,7 @@ func (bs *ONTBlockScanner) GetBalanceByAddress(address ...string) ([]*openwallet
 
 }
 
-func (bs *ONTBlockScanner) GetBalanceByAddressAndContract(fee *big.Int,contractID string,address ...string) ([]*openwallet.Balance, []bool,error) {
+func (bs *ONTBlockScanner) GetBalanceByAddressAndContract(fee *big.Int,contractAddress string,address ...string) ([]*openwallet.Balance, []bool,error) {
 
 	addrsBalance := make([]*openwallet.Balance, 0)
 	feeEnough := make([]bool,0)
@@ -1275,7 +1275,7 @@ func (bs *ONTBlockScanner) GetBalanceByAddressAndContract(fee *big.Int,contractI
 
 		balanceStr := ""
 		symbol := ""
-		if contractID == ontologyTransaction.ONTContractAddress{
+		if contractAddress == ontologyTransaction.ONTContractAddress{
 			balanceStr = balance.ONTBalance.String()
 			if balanceStr == "0"{
 				continue
@@ -1286,7 +1286,7 @@ func (bs *ONTBlockScanner) GetBalanceByAddressAndContract(fee *big.Int,contractI
 			}else{
 				feeEnough =append(feeEnough,true)
 			}
-		}else if contractID == ontologyTransaction.ONGContractAddress{
+		}else if contractAddress == ontologyTransaction.ONGContractAddress{
 			balanceStr = balance.ONGBalance.String()
 			if balanceStr == "0"{
 				continue
