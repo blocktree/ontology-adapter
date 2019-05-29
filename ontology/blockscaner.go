@@ -933,7 +933,7 @@ func (bs *ONTBlockScanner) GetScannedBlockHeader() (*openwallet.BlockHeader, err
 		}
 
 		//就上一个区块链为当前区块
-		blockHeight = blockHeight - 1
+		blockHeight = blockHeight - 2
 
 		hash, err = bs.wm.GetBlockHash(blockHeight)
 		if err != nil {
