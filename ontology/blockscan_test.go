@@ -300,3 +300,8 @@ func Test_tmp(t *testing.T) {
 	}
 	fmt.Println(string(txid))
 }
+
+func TestONTBlockScanner_GetScannedBlockHeader(t *testing.T) {
+	height := tw.Blockscanner.GetScannedBlockHeight()
+	log.Infof("height: %d", height)
+}

@@ -60,8 +60,8 @@ func TestSubscribeAddress(t *testing.T) {
 		symbol     = "ONT"
 		//accountID  = "W4VUMN3wxQcwVEwsRvoyuhrJ95zhyc4zRW"
 		addrs      = map[string]string{
-			"AH6XoEEE5cm21UoGBixYtV9DoNTLM6UzYa": "sender",
-			"AK9xbPMDLfyJWCZjL1daQcGnNoFkAh4N6v": "sender",
+			"AH6XoEEE5cm21UoGBixYtV9DoNTLM6UzYa": "receiver",
+			"AZTod9Ma3bDsorn6NQZgcssvyQvusnbdmp": "sender",
 		}
 	)
 
@@ -91,7 +91,7 @@ func TestSubscribeAddress(t *testing.T) {
 
 	//log.Debug("already got scanner:", assetsMgr)
 	scanner := assetsMgr.GetBlockScanner()
-	scanner.SetRescanBlockHeight(4066850)
+	scanner.SetRescanBlockHeight(4323508)
 
 	if scanner == nil {
 		log.Error(symbol, "is not support block scan")

@@ -134,7 +134,7 @@ func TestTransfer_ONT(t *testing.T) {
 
 	walletID := "WDsEFTdwHqRxSfwTGQm1j2an8M6Q6zp7qX"
 	accountID := "3rdEvmbQk8YDmur5yubWuZozj6qwmPSNVGcZRWqfszLy"
-	to := "AVp5xHQDweK2AYVdquue1ay9UjhnLiKRCQ"
+	to := "AZTod9Ma3bDsorn6NQZgcssvyQvusnbdmp"
 
 	//accountID := "8E9ytsk2fyyKbpYE6hKTG6UzAW3YZwRm5QaVHAc92kNn"
 	//to := "AH6XoEEE5cm21UoGBixYtV9DoNTLM6UzYa"
@@ -148,11 +148,11 @@ func TestTransfer_ONT(t *testing.T) {
 		Decimals:   0,
 	}
 
-	testGetAssetsAccountBalance(tm, walletID, accountID)
+	//testGetAssetsAccountBalance(tm, walletID, accountID)
 
 	testGetAssetsAccountTokenBalance(tm, walletID, accountID, contract)
 
-	rawTx, err := testCreateTransactionStep(tm, walletID, accountID, to, "1", "", &contract)
+	rawTx, err := testCreateTransactionStep(tm, walletID, accountID, to, "3", "", &contract)
 	if err != nil {
 		return
 	}
@@ -190,7 +190,7 @@ func TestTransfer_ONG(t *testing.T) {
 
 	walletID := "WDsEFTdwHqRxSfwTGQm1j2an8M6Q6zp7qX"
 	accountID := "3rdEvmbQk8YDmur5yubWuZozj6qwmPSNVGcZRWqfszLy"
-	to := "AVp5xHQDweK2AYVdquue1ay9UjhnLiKRCQ"
+	to := "AZTod9Ma3bDsorn6NQZgcssvyQvusnbdmp"
 
 	contract := openwallet.SmartContract{
 		ContractID: "0200000000000000000000000000000000000000",
@@ -205,7 +205,7 @@ func TestTransfer_ONG(t *testing.T) {
 
 	testGetAssetsAccountTokenBalance(tm, walletID, accountID, contract)
 
-	rawTx, err := testCreateTransactionStep(tm, walletID, accountID, to, "0.2", "", &contract)
+	rawTx, err := testCreateTransactionStep(tm, walletID, accountID, to, "1", "", &contract)
 	if err != nil {
 		return
 	}
@@ -233,7 +233,7 @@ func TestSummary_ONG(t *testing.T) {
 	accountID := "8E9ytsk2fyyKbpYE6hKTG6UzAW3YZwRm5QaVHAc92kNn"
 	summaryAddress := "AH6XoEEE5cm21UoGBixYtV9DoNTLM6UzYa"
 	contract := openwallet.SmartContract{
-		ContractID: "0200000000000000000000000000000000000000",
+		//ContractID: "0200000000000000000000000000000000000000",
 		Address:    "0200000000000000000000000000000000000000",
 		Symbol:     "ONT",
 		Name:       "ontology",
@@ -283,7 +283,7 @@ func TestSummary_ONT(t *testing.T) {
 	accountID := "8E9ytsk2fyyKbpYE6hKTG6UzAW3YZwRm5QaVHAc92kNn"
 	summaryAddress := "AH6XoEEE5cm21UoGBixYtV9DoNTLM6UzYa"
 	contract := openwallet.SmartContract{
-		ContractID: "0100000000000000000000000000000000000000",
+		//ContractID: "0100000000000000000000000000000000000000",
 		Address:    "0100000000000000000000000000000000000000",
 		Symbol:     "ONT",
 		Name:       "ontology",
