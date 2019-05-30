@@ -174,13 +174,11 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 					continue
 				}
 				if a.ONGUnbound.Cmp(big.NewInt(0)) == 0 {
-					log.Error("No unbound ONG to withdraw in address : "+to, err)
-					return err
+					return fmt.Errorf("No unbound ONG to withdraw in address : " + to)
 				}
 
 				if a.ONGUnbound.Cmp(fee) <= 0 {
-					log.Error("Unbound ONG is not enough to withdraw in address : "+to, err)
-					return err
+					return fmt.Errorf("Unbound ONG is not enough to withdraw in address : " + to)
 				}
 
 				txState.Amount = amount.Sub(a.ONGUnbound, fee).Uint64()
@@ -205,8 +203,7 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 			}
 
 			if amount.Cmp(big.NewInt(0)) == 0 {
-				log.Error("Address : "+to+" not found!", err)
-				return err
+				return fmt.Errorf("Address : " + to + " not found!")
 			}
 
 		} else { // ONG transaction
@@ -220,11 +217,11 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 					count.Add(count, a.ONGBalance)
 					if count.Cmp(amount) >= 0 {
 						countList = append(countList, a.ONGBalance.Sub(a.ONGBalance, count.Sub(count, amount)).Uint64())
-						log.Error("The ONG of the account is enough,"+
-							" but cannot be sent in just one transaction!\n"+
-							"the amount can be sent in "+string(len(countList))+
-							"times with amounts :\n"+strings.Replace(strings.Trim(fmt.Sprint(countList), "[]"), " ", ",", -1), err)
-						return err
+						return fmt.Errorf("The ONG of the account is enough," +
+							" but cannot be sent in just one transaction!\n" +
+							"the amount can be sent in " + string(len(countList)) +
+							"times with amounts :\n" + strings.Replace(strings.Trim(fmt.Sprint(countList), "[]"), " ", ",", -1))
+
 					} else {
 						countList = append(countList, a.ONGBalance.Uint64())
 					}
@@ -235,8 +232,7 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 			}
 
 			if txState.From == "" {
-				log.Error("No enough ONG to send!", err)
-				return err
+				return fmt.Errorf("No enough ONG to send!")
 			}
 		}
 	} else if rawTx.Coin.Contract.Address == ontologyTransaction.ONTContractAddress { // ONT transaction
@@ -254,11 +250,10 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 				count.Add(count, a.ONTBalance)
 				if count.Cmp(amount) >= 0 {
 					countList = append(countList, a.ONTBalance.Sub(a.ONTBalance, count.Sub(count, amount)).Uint64())
-					log.Error("The ONT of the account is enough,"+
-						" but cannot be sent in just one transaction!\n"+
-						"the amount can be sent in "+string(len(countList))+
-						"times with amounts :\n"+strings.Replace(strings.Trim(fmt.Sprint(countList), "[]"), " ", ",", -1), err)
-					return err
+					return fmt.Errorf("The ONT of the account is enough," +
+						" but cannot be sent in just one transaction!\n" +
+						"the amount can be sent in " + string(len(countList)) +
+						"times with amounts :\n" + strings.Replace(strings.Trim(fmt.Sprint(countList), "[]"), " ", ",", -1))
 				} else {
 					countList = append(countList, a.ONTBalance.Uint64())
 				}
@@ -266,19 +261,17 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 			}
 			txState.From = a.Address
 			if a.ONGBalance.Cmp(fee) < 0 {
-				log.Error("No enough ONG to send ONT on address :"+a.Address, err)
-				return err
+				return fmt.Errorf("No enough ONG to send ONT on address :" + a.Address)
 			}
 			break
 		}
 
 		if txState.From == "" {
-			log.Error("No enough ONT to send!", err)
-			return err
+			return fmt.Errorf("No enough ONT to send!")
+
 		}
 	} else { // other contract
-		log.Error("Contract [%v] is not supported yet!", rawTx.Coin.Contract.Address, err)
-		return err
+		return fmt.Errorf("Contract " + rawTx.Coin.Contract.Address + " is not supported yet!")
 	}
 
 	feeInONG, _ := convertBigIntToFloatDecimal(fee.String())
@@ -800,8 +793,7 @@ func (decoder *TransactionDecoder) createRawTransaction(wrapper openwallet.Walle
 		txState.From = addrBalance.Address
 
 	} else { // other contract
-		log.Error("Contract [%v] is not supported yet!", rawTx.Coin.Contract.Address, err)
-		return err
+		return fmt.Errorf("Contract " + rawTx.Coin.Contract.Address + " is not supported yet!")
 	}
 
 	feeInONG, _ := convertBigIntToFloatDecimal(fee.String())
