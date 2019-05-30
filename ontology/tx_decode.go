@@ -330,46 +330,53 @@ func (decoder *TransactionDecoder) SignONTRawTransaction(wrapper openwallet.Wall
 		return nil
 	}
 
-	keySignatures := rawTx.Signatures[rawTx.Account.AccountID]
+	//keySignatures := rawTx.Signatures[rawTx.Account.AccountID]
 
-	if keySignatures != nil {
-		for _, keySignature := range keySignatures {
+	for accountID, keySignatures := range rawTx.Signatures {
 
-			childKey, err := key.DerivedKeyWithPath(keySignature.Address.HDPath, keySignature.EccType)
-			keyBytes, err := childKey.GetPrivateKeyBytes()
-			if err != nil {
-				return err
+		decoder.wm.Log.Debug("accountID:", accountID)
+
+		if keySignatures != nil {
+			for _, keySignature := range keySignatures {
+
+				childKey, err := key.DerivedKeyWithPath(keySignature.Address.HDPath, keySignature.EccType)
+				keyBytes, err := childKey.GetPrivateKeyBytes()
+				if err != nil {
+					return err
+				}
+				// log.Debug("privateKey:", hex.EncodeToString(keyBytes))
+
+				// //privateKeys = append(privateKeys, keyBytes)
+
+				// log.Debug("hash:", txHash.GetTxHashHex())
+
+				//签名交易
+				/////////交易单哈希签名
+				sigPub, err := ontologyTransaction.SignRawTransactionHash(keySignature.Message, keyBytes)
+				if err != nil {
+					return fmt.Errorf("transaction hash sign failed, unexpected error: %v", err)
+				} else {
+
+					//for i, s := range sigPub {
+					//	log.Info("第", i+1, "个签名结果")
+					//	log.Info()
+					//	log.Info("对应的公钥为")
+					//	log.Info(hex.EncodeToString(s.Pubkey))
+					//}
+
+					// txHash.Normal.SigPub = *sigPub
+				}
+
+				keySignature.Signature = hex.EncodeToString(sigPub.Signature)
 			}
-			// log.Debug("privateKey:", hex.EncodeToString(keyBytes))
-
-			// //privateKeys = append(privateKeys, keyBytes)
-
-			// log.Debug("hash:", txHash.GetTxHashHex())
-
-			//签名交易
-			/////////交易单哈希签名
-			sigPub, err := ontologyTransaction.SignRawTransactionHash(keySignature.Message, keyBytes)
-			if err != nil {
-				return fmt.Errorf("transaction hash sign failed, unexpected error: %v", err)
-			} else {
-
-				//for i, s := range sigPub {
-				//	log.Info("第", i+1, "个签名结果")
-				//	log.Info()
-				//	log.Info("对应的公钥为")
-				//	log.Info(hex.EncodeToString(s.Pubkey))
-				//}
-
-				// txHash.Normal.SigPub = *sigPub
-			}
-
-			keySignature.Signature = hex.EncodeToString(sigPub.Signature)
 		}
+		rawTx.Signatures[accountID] = keySignatures
 	}
+
 
 	log.Info("transaction hash sign success")
 
-	rawTx.Signatures[rawTx.Account.AccountID] = keySignatures
+
 
 	return nil
 }
@@ -816,27 +823,35 @@ func (decoder *TransactionDecoder) createRawTransaction(wrapper openwallet.Walle
 
 	rawTx.RawHex = emptyTrans
 
-	if rawTx.Signatures == nil {
-		rawTx.Signatures = make(map[string][]*openwallet.KeySignature)
+	signatures := rawTx.Signatures
+	if signatures == nil {
+		signatures = make(map[string][]*openwallet.KeySignature)
 	}
 
-	keySigs := make([]*openwallet.KeySignature, 0)
 	for _, address := range transHash.Addresses {
 		addr, err := wrapper.GetAddress(address)
 		if err != nil {
 			return err
 		}
-		signature := openwallet.KeySignature{
+		signature := &openwallet.KeySignature{
 			EccType: decoder.wm.Config.CurveType,
 			Nonce:   "",
 			Address: addr,
 			Message: transHash.GetTxHashHex(),
 		}
 
-		keySigs = append(keySigs, &signature)
+		keySigs := signatures[addr.AccountID]
+		if keySigs == nil {
+			keySigs = make([]*openwallet.KeySignature, 0)
+		}
+
+		//装配签名
+		keySigs = append(keySigs, signature)
+
+		signatures[addr.AccountID] = keySigs
 	}
 
-	rawTx.Signatures[rawTx.Account.AccountID] = keySigs
+	rawTx.Signatures = signatures
 
 	rawTx.FeeRate = big.NewInt(int64(gasPrice)).String()
 
