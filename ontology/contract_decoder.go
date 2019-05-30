@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math/big"
 	"strconv"
+	"fmt"
 
 	"github.com/blocktree/openwallet/log"
 	"github.com/blocktree/openwallet/openwallet"
@@ -80,7 +81,6 @@ func newAddrBalance(data []string) *AddrBalance {
 func convertFlostStringToBigInt(amount string) (*big.Int, error) {
 	vDecimal, err := decimal.NewFromString(amount)
 	if err != nil {
-		log.Error("convert from string to decimal failed, err=", err)
 		return nil, err
 	}
 
@@ -92,7 +92,6 @@ func convertFlostStringToBigInt(amount string) (*big.Int, error) {
 	vDecimal = vDecimal.Mul(d)
 	rst := new(big.Int)
 	if _, valid := rst.SetString(vDecimal.String(), 10); !valid {
-		log.Error("conver to big.int failed")
 		return nil, errors.New("conver to big.int failed")
 	}
 	return rst, nil
@@ -101,7 +100,6 @@ func convertFlostStringToBigInt(amount string) (*big.Int, error) {
 func convertBigIntToFloatDecimal(amount string) (decimal.Decimal, error) {
 	d, err := decimal.NewFromString(amount)
 	if err != nil {
-		log.Error("convert string to deciaml failed, err=", err)
 		return d, err
 	}
 
@@ -118,7 +116,6 @@ func convertBigIntToFloatDecimal(amount string) (decimal.Decimal, error) {
 func convertIntStringToBigInt(amount string) (*big.Int, error) {
 	vInt64, err := strconv.ParseInt(amount, 10, 64)
 	if err != nil {
-		log.Error("convert from string to int failed, err=", err)
 		return nil, err
 	}
 
@@ -148,8 +145,7 @@ func (decoder *ContractDecoder) GetTokenBalanceByAddress(contract openwallet.Sma
 		if contract.Address == ontologyTransaction.ONTContractAddress {
 			balance, err := decoder.wm.RPCClient.getONTBalance(address[i])
 			if err != nil {
-				log.Error("Get ONT balance of address [%v] failed with error : [%v]", address[i], err)
-				return nil, err
+				return nil,fmt.Errorf("Get ONT balance of address [%v] failed with error : "+address[i])
 			}
 			tokenBalance.Balance = &openwallet.Balance{
 				Address:          address[i],
@@ -161,8 +157,7 @@ func (decoder *ContractDecoder) GetTokenBalanceByAddress(contract openwallet.Sma
 		} else if contract.Address == ontologyTransaction.ONGContractAddress {
 			balance, err := decoder.wm.RPCClient.getONGBalance(address[i])
 			if err != nil {
-				log.Error("Get ONG balance of address [%v] failed with error : [%v]", address[i], err)
-				return nil, err
+				return nil,fmt.Errorf("Get ONG balance of address [%v] failed with error : "+ address[i])
 			}
 			ong, err := convertBigIntToFloatDecimal(balance.ONGBalance.String())
 			if err != nil {
