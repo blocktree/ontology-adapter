@@ -2,13 +2,12 @@ package ontology
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 	"strconv"
-	"fmt"
 
-	"github.com/blocktree/openwallet/log"
-	"github.com/blocktree/openwallet/openwallet"
 	"github.com/blocktree/go-owcdrivers/ontologyTransaction"
+	"github.com/blocktree/openwallet/openwallet"
 	"github.com/shopspring/decimal"
 	"github.com/tidwall/gjson"
 )
@@ -122,6 +121,22 @@ func convertIntStringToBigInt(amount string) (*big.Int, error) {
 	return big.NewInt(vInt64), nil
 }
 
+func convertBigIntToFloatViaDecimal(amount string, decimals int) (decimal.Decimal, error) {
+	d, err := decimal.NewFromString(amount)
+	if err != nil {
+		return d, err
+	}
+
+	decimalInt := big.NewInt(1)
+	for i := 0; i < decimals; i++ {
+		decimalInt.Mul(decimalInt, big.NewInt(10))
+	}
+
+	w, _ := decimal.NewFromString(decimalInt.String())
+	d = d.Div(w)
+	return d, nil
+}
+
 type ContractDecoder struct {
 	*openwallet.SmartContractDecoderBase
 	wm *WalletManager
@@ -145,35 +160,31 @@ func (decoder *ContractDecoder) GetTokenBalanceByAddress(contract openwallet.Sma
 		if contract.Address == ontologyTransaction.ONTContractAddress {
 			balance, err := decoder.wm.RPCClient.getONTBalance(address[i])
 			if err != nil {
-				return nil,fmt.Errorf("Get ONT balance of address [%v] failed with error : "+address[i])
+				return nil, fmt.Errorf("Get ONT balance of address [%v] failed with error : " + address[i])
 			}
+
+			balanceWithDecimal, err := convertBigIntToFloatViaDecimal(balance.ONTBalance.String(), int(contract.Decimals))
 			tokenBalance.Balance = &openwallet.Balance{
 				Address:          address[i],
 				Symbol:           contract.Symbol,
-				Balance:          balance.ONTBalance.String(),
-				ConfirmBalance:   balance.ONTBalance.String(),
+				Balance:          balanceWithDecimal.String(),
+				ConfirmBalance:   balanceWithDecimal.String(),
 				UnconfirmBalance: "0",
 			}
 		} else if contract.Address == ontologyTransaction.ONGContractAddress {
 			balance, err := decoder.wm.RPCClient.getONGBalance(address[i])
 			if err != nil {
-				return nil,fmt.Errorf("Get ONG balance of address [%v] failed with error : "+ address[i])
-			}
-			ong, err := convertBigIntToFloatDecimal(balance.ONGBalance.String())
-			if err != nil {
-				log.Error("Get ONG balance of address [%v] failed with error : [%v]", address[i], err)
-			}
-			ongUnbound, err := convertBigIntToFloatDecimal(balance.ONGUnbound.String())
-			if err != nil {
-				log.Error("Get ONG balance of address [%v] failed with error : [%v]", address[i], err)
+				return nil, fmt.Errorf("Get ONG balance of address [%v] failed with error : " + address[i])
 			}
 
+			balanceWithDecimal, err := convertBigIntToFloatViaDecimal(balance.ONGBalance.String(), int(contract.Decimals))
+			unboundBalanceWithDecimal, err := convertBigIntToFloatViaDecimal(balance.ONGUnbound.String(), int(contract.Decimals))
 			tokenBalance.Balance = &openwallet.Balance{
 				Address:          address[i],
 				Symbol:           contract.Symbol,
-				Balance:          ong.String(),
-				ConfirmBalance:   ong.String(),
-				UnconfirmBalance: ongUnbound.String(),
+				Balance:          balanceWithDecimal.String(),
+				ConfirmBalance:   balanceWithDecimal.String(),
+				UnconfirmBalance: unboundBalanceWithDecimal.String(),
 			}
 		} else {
 			// other contract
