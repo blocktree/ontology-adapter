@@ -173,6 +173,9 @@ func (bs *ONTBlockScanner) ScanBlockTask() {
 
 			log.Std.Info("delete recharge records on block height: %d.", currentHeight-1)
 
+			//查询本地分叉的区块
+			forkBlock, _ := bs.wm.GetLocalBlock(currentHeight - 1)
+
 			//删除上一区块链的所有充值记录
 			//bs.DeleteRechargesByHeight(currentHeight - 1)
 			//删除上一区块链的未扫记录
@@ -212,6 +215,12 @@ func (bs *ONTBlockScanner) ScanBlockTask() {
 			bs.wm.SaveLocalNewBlock(localBlock.Height, localBlock.Hash)
 
 			isFork = true
+
+			if forkBlock != nil {
+
+				//通知分叉区块给观测者，异步处理
+				bs.newBlockNotify(forkBlock, isFork)
+			}
 
 		} else {
 
@@ -964,7 +973,7 @@ func (bs *ONTBlockScanner) GetCurrentBlockHeader() (*openwallet.BlockHeader, err
 		return nil, err
 	}
 
-	hash, err = bs.wm.GetBlockHash(blockHeight)
+	hash, err = bs.wm.GetBlockHash(blockHeight - 1)
 	if err != nil {
 		return nil, err
 	}
