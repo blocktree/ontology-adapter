@@ -713,7 +713,7 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 				//创建一笔交易单
 				rawTx := &openwallet.RawTransaction{
 					Coin:    sumRawTx.Coin,
-					Account: feesSupportAccount,
+					Account: sumRawTx.Account,
 					To: map[string]string{
 						sumRawTx.SummaryAddress: sumAmount,
 					},
