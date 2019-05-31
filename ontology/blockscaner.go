@@ -973,7 +973,7 @@ func (bs *ONTBlockScanner) GetCurrentBlockHeader() (*openwallet.BlockHeader, err
 		return nil, err
 	}
 
-	hash, err = bs.wm.GetBlockHash(blockHeight)
+	hash, err = bs.wm.GetBlockHash(blockHeight - 1)
 	if err != nil {
 		return nil, err
 	}
