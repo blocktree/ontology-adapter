@@ -141,7 +141,7 @@ func TestWalletManager_GetAssetsAccountTokenBalance(t *testing.T) {
 		Symbol:   "ONT",
 		Name:     "ONG",
 		Token:    "ONG",
-		Decimals: 0,
+		Decimals: 9,
 	}
 
 	balanceONG, err := tm.GetAssetsAccountTokenBalance(testApp, walletID, accountID, contractONG)

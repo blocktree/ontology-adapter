@@ -134,7 +134,7 @@ func TestTransfer_ONT(t *testing.T) {
 
 	walletID := "WDsEFTdwHqRxSfwTGQm1j2an8M6Q6zp7qX"
 	accountID := "3rdEvmbQk8YDmur5yubWuZozj6qwmPSNVGcZRWqfszLy"
-	to := "AH1hCEidoVLTTzYgsbhoK4WpwW6u6euCGa"
+	to := "AK61RZpUj4Lp9nGisgCoRKxFctgcwCFudM"
 
 	//accountID := "8E9ytsk2fyyKbpYE6hKTG6UzAW3YZwRm5QaVHAc92kNn"
 	//to := "AH6XoEEE5cm21UoGBixYtV9DoNTLM6UzYa"
