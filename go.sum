@@ -24,8 +24,11 @@ github.com/blocktree/go-owcdrivers v1.0.12 h1:of6EMtvzg46KEbQsi10d7QT8jkrkicQIob
 github.com/blocktree/go-owcdrivers v1.0.12/go.mod h1:TKevypdvkQD4ItBGscwMJqWWMOhDo9vXwnV1wacNs9w=
 github.com/blocktree/go-owcdrivers v1.0.15 h1:UAASqn9MOjJIOsCk4wQ7tbtNW6liayqlW+VQrEMO4yc=
 github.com/blocktree/go-owcdrivers v1.0.15/go.mod h1:8dHbObmem3ac25DCMxUTBpOgbLaddwv1I3OkO0hG7+8=
+github.com/blocktree/go-owcdrivers v1.0.16 h1:CJJoWUvGjZ7GOoNEKcD0wKaX5WPe0yBe30+3mxND4Kc=
+github.com/blocktree/go-owcdrivers v1.0.16/go.mod h1:9OiZB4l1jvseJ0OsmwewfCA75RLaiCty0nYj2p+tCc4=
 github.com/blocktree/go-owcrypt v1.0.1 h1:hTqRN7mH2L0mVzHcL9jE0YM7B4oUFiDvksLEpam7oU8=
 github.com/blocktree/go-owcrypt v1.0.1/go.mod h1:5FCinL/4XVEqbmAFTOUgfMJVNJEw6WzVy624qsxzZC8=
+github.com/blocktree/ontology-adapter v1.0.8/go.mod h1:NA7qQB0g/85ty9XGLt+I0YeuV7ErnWhTTXC1MH/jCS8=
 github.com/blocktree/openwallet v1.4.1 h1:Erju/SLK3qjU9OZ4JEsrUBD6wfvC0PBC+28rhy+BLM4=
 github.com/blocktree/openwallet v1.4.1/go.mod h1:jStJigV8cNTOmvzvWJ4bdjXhiRvtQtSh++uJxSZRcb0=
 github.com/blocktree/openwallet v1.4.3 h1:7fXKIOBdfDV0iJ09CI7GhYsELRQs2r90+HlMmaddmaU=
@@ -70,7 +73,6 @@ github.com/ethereum/go-ethereum v1.8.24/go.mod h1:PwpWDrCLZrV+tfrhqqF6kPknbISMHa
 github.com/ethereum/go-ethereum v1.8.25 h1:j0/n1AsED2qmTOL95ZY50UmY2CexRrmCiOV0mSaPIGk=
 github.com/ethereum/go-ethereum v1.8.25/go.mod h1:PwpWDrCLZrV+tfrhqqF6kPknbISMHaJv9Ln3kPCZLwY=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
-github.com/go-playground/locales v0.12.1 h1:2FITxuFt/xuCNP1Acdhv62OzaCiviiE4kotfhkmOqEc=
 github.com/go-playground/locales v0.12.1/go.mod h1:IUMDtCfWo/w/mtMfIE/IG2K+Ey3ygWanZIBtBW0W2TM=
 github.com/go-redis/redis v6.14.2+incompatible/go.mod h1:NAIEuMOZ/fxfXJIrKDQDz8wamY7mA7PouImQ2Jvg6kA=
 github.com/go-redis/redis v6.15.2+incompatible/go.mod h1:NAIEuMOZ/fxfXJIrKDQDz8wamY7mA7PouImQ2Jvg6kA=
