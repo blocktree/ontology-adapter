@@ -21,6 +21,8 @@ gasPriceType = 0
 # fixexd  gas price value
 gasPriceFixed = 500
 
+# Cache data file directory, default = "", current directory: ./data
+dataDir = ""
 ```
 
 ## Tips
