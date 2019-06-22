@@ -108,7 +108,7 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 	}
 
 	if len(addresses) == 0 {
-		return fmt.Errorf("No addresses found in wallet [%s]", rawTx.Account.AccountID)
+		return openwallet.Errorf(openwallet.ErrAccountNotAddress, "[%s] have not addresses", rawTx.Account.AccountID)
 	}
 
 	addressesBalanceList := make([]AddrBalance, 0, len(addresses))
@@ -232,7 +232,7 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 			}
 
 			if txState.From == "" {
-				return fmt.Errorf("No enough ONG to send!")
+				return openwallet.Errorf(openwallet.ErrInsufficientBalanceOfAccount, "the balance: %s is not enough", amountStr)
 			}
 		}
 	} else if rawTx.Coin.Contract.Address == ontologyTransaction.ONTContractAddress { // ONT transaction
@@ -267,7 +267,7 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 		}
 
 		if txState.From == "" {
-			return fmt.Errorf("No enough ONT to send!")
+			return openwallet.Errorf(openwallet.ErrInsufficientBalanceOfAccount, "the balance: %s is not enough", amountStr)
 
 		}
 	} else { // other contract
@@ -373,10 +373,7 @@ func (decoder *TransactionDecoder) SignONTRawTransaction(wrapper openwallet.Wall
 		rawTx.Signatures[accountID] = keySignatures
 	}
 
-
 	log.Info("transaction hash sign success")
-
-
 
 	return nil
 }
