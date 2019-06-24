@@ -1019,7 +1019,7 @@ func (bs *ONTBlockScanner) ExtractTransactionData(txid string, scanTargetFunc op
 	return extData, nil
 }
 
-//DropRechargeRecords 清楚钱包的全部充值记录
+//DropRechargeRecords  清楚钱包的全部充值记录
 //func (bs *ONTBlockScanner) DropRechargeRecords(accountID string) error {
 //	bs.mu.RLock()
 //	defer bs.mu.RUnlock()
