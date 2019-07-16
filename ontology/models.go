@@ -84,6 +84,7 @@ type Block struct {
 
 type Notify struct {
 	ContractAddress string
+	IsFee           bool
 	Method          string
 	From            string
 	To              string

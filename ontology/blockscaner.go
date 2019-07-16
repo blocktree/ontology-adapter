@@ -591,6 +591,9 @@ func (bs *ONTBlockScanner) extractTransaction(trx *Transaction, result *ExtractR
 					input.Address=notify.From
 					input.Symbol=bs.wm.Symbol()
 					input.Amount=notify.Amount
+					if notify.IsFee {
+						input.TxType = 1
+					}
 
 					if notify.ContractAddress == ontologyTransaction.ONTContractAddress{
 						input.Coin = openwallet.Coin{
@@ -800,6 +803,7 @@ func modifyExtractData(data *openwallet.TxExtractData)[]*openwallet.TxExtractDat
 				TxID:        data.TxInputs[index].TxID,
 				Decimal:     0,
 				Status:      "1",
+				TxType:      data.TxInputs[index].TxType,
 			}
 			tx.WxID = openwallet.GenTransactionWxID(tx)
 			ed.Transaction = tx
@@ -817,6 +821,7 @@ func modifyExtractData(data *openwallet.TxExtractData)[]*openwallet.TxExtractDat
 				TxID:        data.TxInputs[index].TxID,
 				Decimal:     0,
 				Status:      "1",
+				TxType:      data.TxInputs[index].TxType,
 			}
 			tx.WxID = openwallet.GenTransactionWxID(tx)
 			ed.Transaction = tx

@@ -234,7 +234,7 @@ func (rpc *RpcClient) getTxDetail(txid string) ([]Notify, error) {
 	notifys := gjson.Get(string(resp), "Notify").Array()
 	var ret []Notify
 	if len(notifys) >= 1 {
-		for _, notify := range notifys {
+		for i, notify := range notifys {
 			contractAddress := notify.Get("ContractAddress").String()
 			if contractAddress != ontologyTransaction.ONGContractAddress && contractAddress != ontologyTransaction.ONTContractAddress {
 				continue
@@ -244,13 +244,25 @@ func (rpc *RpcClient) getTxDetail(txid string) ([]Notify, error) {
 			if len(states) != 4 {
 				return nil, errors.New("Get transaction result failed")
 			}
-			ret = append(ret, Notify{
-				ContractAddress: contractAddress,
-				Method:          states[0].String(),
-				From:            states[1].String(),
-				To:              states[2].String(),
-				Amount:          states[3].String(),
-			})
+			if i == 0{
+				ret = append(ret, Notify{
+					ContractAddress: contractAddress,
+					Method:          states[0].String(),
+					From:            states[1].String(),
+					To:              states[2].String(),
+					Amount:          states[3].String(),
+				})
+			} else {
+				ret = append(ret, Notify{
+					ContractAddress: contractAddress,
+					IsFee:           true,
+					Method:          states[0].String(),
+					From:            states[1].String(),
+					To:              states[2].String(),
+					Amount:          states[3].String(),
+				})
+			}
+
 		}
 	}
 
