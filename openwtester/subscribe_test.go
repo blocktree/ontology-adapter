@@ -16,6 +16,7 @@
 package openwtester
 
 import (
+	"github.com/blocktree/openwallet/common/file"
 	"path/filepath"
 	"testing"
 
@@ -60,7 +61,7 @@ func TestSubscribeAddress(t *testing.T) {
 		symbol     = "ONT"
 		//accountID  = "W4VUMN3wxQcwVEwsRvoyuhrJ95zhyc4zRW"
 		addrs      = map[string]string{
-			"AH6XoEEE5cm21UoGBixYtV9DoNTLM6UzYa": "sender",
+			"AVyk2ZswLqo2X3FmKcuSGq9GaXrJF4gsW6": "sender",
 			"AK9xbPMDLfyJWCZjL1daQcGnNoFkAh4N6v": "reciver",
 		}
 	)
@@ -91,7 +92,19 @@ func TestSubscribeAddress(t *testing.T) {
 
 	//log.Debug("already got scanner:", assetsMgr)
 	scanner := assetsMgr.GetBlockScanner()
-	scanner.SetRescanBlockHeight(4066081)
+
+	if scanner.SupportBlockchainDAI() {
+		file.MkdirAll(dbFilePath)
+		dai, err := openwallet.NewBlockchainLocal(filepath.Join(dbFilePath, dbFileName), false)
+		if err != nil {
+			log.Error("NewBlockchainLocal err: %v", err)
+			return
+		}
+
+		scanner.SetBlockchainDAI(dai)
+	}
+
+	scanner.SetRescanBlockHeight(5718710)
 
 	if scanner == nil {
 		log.Error(symbol, "is not support block scan")
