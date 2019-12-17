@@ -16,16 +16,14 @@
 package ontology
 
 import (
-	"math/big"
 	"errors"
 	"fmt"
+	"math/big"
 	"net/url"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/asdine/storm"
 	"github.com/blocktree/go-owcdrivers/ontologyTransaction"
 	"github.com/blocktree/openwallet/common"
 	"github.com/blocktree/openwallet/log"
@@ -36,7 +34,6 @@ import (
 )
 
 const (
-	blockchainBucket     = "blockchain" //区块链数据集合
 	maxExtractingSize    = 20           //并发的扫描线程数
 	RPCServerRest        = 0            //RPC服务，Restful 测试 API
 	RPCServerMainnetNode = 1            // RPC服务，主网节点 API
@@ -100,7 +97,7 @@ func (bs *ONTBlockScanner) SetRescanBlockHeight(height uint64) error {
 		return err
 	}
 
-	bs.wm.SaveLocalNewBlock(height, hash)
+	bs.wm.Blockscanner.SaveLocalNewBlock(height, hash)
 
 	return nil
 }
@@ -179,7 +176,7 @@ func (bs *ONTBlockScanner) ScanBlockTask() {
 			//删除上一区块链的所有充值记录
 			//bs.DeleteRechargesByHeight(currentHeight - 1)
 			//删除上一区块链的未扫记录
-			bs.wm.DeleteUnscanRecord(currentHeight - 1)
+			bs.wm.Blockscanner.DeleteUnscanRecord(uint32(currentHeight - 1))
 			currentHeight = currentHeight - 2 //倒退2个区块重新扫描
 			if currentHeight <= 0 {
 				currentHeight = 1
@@ -212,7 +209,7 @@ func (bs *ONTBlockScanner) ScanBlockTask() {
 			log.Std.Info("rescan block on height: %d, hash: %s .", currentHeight, currentHash)
 
 			//重新记录一个新扫描起点
-			bs.wm.SaveLocalNewBlock(localBlock.Height, localBlock.Hash)
+			bs.wm.Blockscanner.SaveLocalNewBlock(localBlock.Height, localBlock.Hash)
 
 			isFork = true
 
@@ -233,7 +230,7 @@ func (bs *ONTBlockScanner) ScanBlockTask() {
 			currentHash = hash
 
 			//保存本地新高度
-			bs.wm.SaveLocalNewBlock(currentHeight, currentHash)
+			bs.wm.Blockscanner.SaveLocalNewBlock(currentHeight, currentHash)
 			bs.SaveLocalBlock(block)
 
 			isFork = false
@@ -379,11 +376,11 @@ func (bs *ONTBlockScanner) RescanFailedRecord() {
 		}
 
 		//删除未扫记录
-		bs.wm.DeleteUnscanRecord(height)
+		bs.wm.Blockscanner.DeleteUnscanRecord(uint32(height))
 	}
 
 	//删除未没有找到交易记录的重扫记录
-	bs.wm.DeleteUnscanRecordNotFindTX()
+	bs.wm.Blockscanner.DeleteUnscanRecordNotFindTX()
 }
 
 //newBlockNotify 获得新区块后，通知给观测者
@@ -858,34 +855,26 @@ func (bs *ONTBlockScanner) newExtractDataNotify(height uint64, extractData map[s
 }
 
 //DeleteUnscanRecordNotFindTX 删除未没有找到交易记录的重扫记录
-func (wm *WalletManager) DeleteUnscanRecordNotFindTX() error {
+func (bs *ONTBlockScanner) DeleteUnscanRecordNotFindTX() error {
 
 	//删除找不到交易单
 	reason := "[-5]No information available about transaction"
 
-	//获取本地区块高度
-	db, err := storm.Open(filepath.Join(wm.Config.dbPath, wm.Config.BlockchainFile))
-	if err != nil {
-		return err
+	if bs.BlockchainDAI == nil {
+		return fmt.Errorf("Blockchain DAI is not setup ")
 	}
-	defer db.Close()
 
-	var list []*UnscanRecord
-	err = db.All(&list)
+	list, err := bs.BlockchainDAI.GetUnscanRecords(bs.wm.Symbol())
 	if err != nil {
 		return err
 	}
 
-	tx, err := db.Begin(true)
-	if err != nil {
-		return err
-	}
 	for _, r := range list {
 		if strings.HasPrefix(r.Reason, reason) {
-			tx.DeleteStruct(r)
+			bs.BlockchainDAI.DeleteUnscanRecordByID(r.ID, bs.wm.Symbol())
 		}
 	}
-	return tx.Commit()
+	return nil
 }
 
 //GetScannedBlockHeader 获取当前已扫区块高度
@@ -897,8 +886,10 @@ func (bs *ONTBlockScanner) GetScannedBlockHeader() (*openwallet.BlockHeader, err
 		err         error
 	)
 
-	blockHeight, hash = bs.wm.GetLocalNewBlock()
-
+	blockHeight, hash, err = bs.wm.Blockscanner.GetLocalNewBlock()
+	if err != nil {
+		return nil, err
+	}
 	//如果本地没有记录，查询接口的高度
 	if blockHeight == 0 {
 		blockHeight, err = bs.wm.GetBlockHeight()
@@ -953,7 +944,7 @@ func (bs *ONTBlockScanner) GetCurrentBlockHeader() (*openwallet.BlockHeader, err
 
 //GetScannedBlockHeight 获取已扫区块高度
 func (bs *ONTBlockScanner) GetScannedBlockHeight() uint64 {
-	localHeight, _ := bs.wm.GetLocalNewBlock()
+	localHeight, _ , _:= bs.wm.Blockscanner.GetLocalNewBlock()
 	return localHeight
 }
 
@@ -1000,38 +991,35 @@ func (wm *WalletManager) GetBlockHeight() (uint64, error) {
 }
 
 //GetLocalNewBlock 获取本地记录的区块高度和hash
-func (wm *WalletManager) GetLocalNewBlock() (uint64, string) {
+func (bs *ONTBlockScanner) GetLocalNewBlock() (uint64, string, error) {
 
-	var (
-		blockHeight uint64 = 0
-		blockHash   string = ""
-	)
-
-	//获取本地区块高度
-	db, err := storm.Open(filepath.Join(wm.Config.dbPath, wm.Config.BlockchainFile))
-	if err != nil {
-		return 0, ""
+	if bs.BlockchainDAI == nil {
+		return 0, "", fmt.Errorf("Blockchain DAI is not setup ")
 	}
-	defer db.Close()
 
-	db.Get(blockchainBucket, "blockHeight", &blockHeight)
-	db.Get(blockchainBucket, "blockHash", &blockHash)
+	header, err := bs.BlockchainDAI.GetCurrentBlockHead(bs.wm.Symbol())
+	if err != nil {
+		return 0, "", err
+	}
 
-	return blockHeight, blockHash
+	return header.Height, header.Hash, nil
 }
 
 //SaveLocalNewBlock 记录区块高度和hash到本地
-func (wm *WalletManager) SaveLocalNewBlock(blockHeight uint64, blockHash string) {
+func (bs *ONTBlockScanner) SaveLocalNewBlock(blockHeight uint64, blockHash string) error {
 
-	//获取本地区块高度
-	db, err := storm.Open(filepath.Join(wm.Config.dbPath, wm.Config.BlockchainFile))
-	if err != nil {
-		return
+	if bs.BlockchainDAI == nil {
+		return fmt.Errorf("Blockchain DAI is not setup ")
 	}
-	defer db.Close()
 
-	db.Set(blockchainBucket, "blockHeight", &blockHeight)
-	db.Set(blockchainBucket, "blockHash", &blockHash)
+	header := &openwallet.BlockHeader{
+		Hash:   blockHash,
+		Height: blockHeight,
+		Fork:   false,
+		Symbol: bs.wm.Symbol(),
+	}
+
+	return bs.BlockchainDAI.SaveCurrentBlockHead(header)
 }
 
 //GetBlockHash 根据区块高度获得区块hash
@@ -1054,28 +1042,6 @@ func (wm *WalletManager) GetTxIDsInMemPool() ([]string, error) {
 //GetTransaction 获取交易单
 func (wm *WalletManager) GetTransaction(txid string) (*Transaction, error) {
 	return wm.RPCClient.getTransaction(txid)
-}
-
-//DeleteUnscanRecord 删除指定高度的未扫记录
-func (wm *WalletManager) DeleteUnscanRecord(height uint64) error {
-	//获取本地区块高度
-	db, err := storm.Open(filepath.Join(wm.Config.dbPath, wm.Config.BlockchainFile))
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	var list []*UnscanRecord
-	err = db.Find("BlockHeight", height, &list)
-	if err != nil {
-		return err
-	}
-
-	for _, r := range list {
-		db.DeleteStruct(r)
-	}
-
-	return nil
 }
 
 //GetAssetsAccountBalanceByAddress 查询账户相关地址的交易记录
