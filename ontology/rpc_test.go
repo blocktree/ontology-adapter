@@ -74,7 +74,7 @@ func Test_getBlockHashByRest(t *testing.T) {
 }
 
 func Test_getTransaction(t *testing.T) {
-	txid := "7e6cc8b8819b342e901cc3a282046006be3a7cf8231a01c0761e1937fbf3a60d"
+	txid := "0bc0c7a34f5e83211a03a9f6f3fc8c03ef7a9da2b45b87886d90488eff3bfc60"
 	trx, err := tw.RPCClient.getTransaction(txid)
 	fmt.Println(err)
 	fmt.Println(trx)

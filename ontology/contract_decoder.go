@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/blocktree/go-owcdrivers/ontologyTransaction"
-	"github.com/blocktree/openwallet/openwallet"
+	"github.com/blocktree/openwallet/v2/openwallet"
 	"github.com/shopspring/decimal"
 	"github.com/tidwall/gjson"
 )

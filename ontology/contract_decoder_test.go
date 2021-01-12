@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/blocktree/go-owcdrivers/ontologyTransaction"
-	"github.com/blocktree/openwallet/openwallet"
+	"github.com/blocktree/openwallet/v2/openwallet"
 )
 
 func Test_GetTokenBalanceByAddress(t *testing.T) {

@@ -17,7 +17,7 @@ package ontology
 
 import (
 	"fmt"
-	"github.com/blocktree/openwallet/openwallet"
+	"github.com/blocktree/openwallet/v2/openwallet"
 )
 
 //SaveLocalBlockHead 记录区块高度和hash到本地
@@ -84,8 +84,8 @@ func (bs *ONTBlockScanner) GetLocalBlock(height uint32) (*Block, error) {
 	}
 
 	block := &Block{
-		Hash: header.Hash,
-		Height:  header.Height,
+		Hash:   header.Hash,
+		Height: header.Height,
 	}
 
 	return block, nil
@@ -119,4 +119,3 @@ func (bs *ONTBlockScanner) GetUnscanRecords() ([]*openwallet.UnscanRecord, error
 
 	return bs.BlockchainDAI.GetUnscanRecords(bs.wm.Symbol())
 }
-
