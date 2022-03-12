@@ -1,2 +1,6 @@
 blockchain.db
 openwtester/data
+go.sum
+go.sum
+*.db
+*.key

@@ -64,6 +64,21 @@ import (
 //
 //}
 
+//AddressEncode 地址编码
+func (dec *AddressDecoderV2) AddressEncode(hash []byte, opts ...interface{}) (string, error) {
+
+	cfg := addressEncoder.ONT_Address
+
+	hash = append([]byte{byte(len(hash))}, hash...)
+	hash = append(hash, ontologyTransaction.OpCodeCheckSig)
+
+	pkHash := owcrypt.Hash(hash, 0, owcrypt.HASH_ALG_HASH160)
+
+	address := addressEncoder.AddressEncode(pkHash, cfg)
+
+	return address, nil
+}
+
 type AddressDecoderV2 struct {
 
 	openwallet.AddressDecoderV2Base
@@ -89,21 +104,6 @@ func (dec *AddressDecoderV2) AddressDecode(addr string, opts ...interface{}) ([]
 		return nil, err
 	}
 	return decodeHash, nil
-}
-
-//AddressEncode 地址编码
-func (dec *AddressDecoderV2) AddressEncode(hash []byte, opts ...interface{}) (string, error) {
-
-	cfg := addressEncoder.ONT_Address
-
-	hash = append([]byte{byte(len(hash))}, hash...)
-	hash = append(hash, ontologyTransaction.OpCodeCheckSig)
-
-	pkHash := owcrypt.Hash(hash, 0, owcrypt.HASH_ALG_HASH160)
-
-	address := addressEncoder.AddressEncode(pkHash, cfg)
-
-	return address, nil
 }
 
 // AddressVerify 地址校验

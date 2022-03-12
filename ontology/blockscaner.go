@@ -578,12 +578,11 @@ func (bs *ONTBlockScanner) extractTransaction(trx *Transaction, result *ExtractR
 				if notify.Method != "transfer" {
 					continue
 				}
-				targetResult := scanAddressFunc(openwallet.ScanTargetParam {
+				targetResult := scanAddressFunc(openwallet.ScanTargetParam{
 					ScanTarget:     notify.From,
 					Symbol:         bs.wm.Symbol(),
 					ScanTargetType: openwallet.ScanTargetTypeAccountAddress,
 				})
-
 
 				if targetResult.Exist {
 					input := openwallet.TxInput{}
@@ -640,14 +639,13 @@ func (bs *ONTBlockScanner) extractTransaction(trx *Transaction, result *ExtractR
 
 					ed.TxInputs = append(ed.TxInputs, &input)
 
-					targetResult1 := scanAddressFunc(openwallet.ScanTargetParam {
+					targetResult1 := scanAddressFunc(openwallet.ScanTargetParam{
 						ScanTarget:     notify.To,
 						Symbol:         bs.wm.Symbol(),
 						ScanTargetType: openwallet.ScanTargetTypeAccountAddress,
 					})
 
-
-					if targetResult.Exist && targetResult.SourceKey == targetResult1.SourceKey{
+					if targetResult.Exist && targetResult.SourceKey == targetResult1.SourceKey {
 
 						output := openwallet.TxOutPut{}
 						output.Received = true
@@ -709,12 +707,11 @@ func (bs *ONTBlockScanner) extractTransaction(trx *Transaction, result *ExtractR
 
 				}
 
-				targetResult = scanAddressFunc(openwallet.ScanTargetParam {
+				targetResult = scanAddressFunc(openwallet.ScanTargetParam{
 					ScanTarget:     notify.To,
 					Symbol:         bs.wm.Symbol(),
 					ScanTargetType: openwallet.ScanTargetTypeAccountAddress,
 				})
-
 
 				if targetResult.Exist {
 					output := openwallet.TxOutPut{}

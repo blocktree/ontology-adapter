@@ -96,7 +96,7 @@ func (decoder *TransactionDecoder) SubmitRawTransaction(wrapper openwallet.Walle
 func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.WalletDAI, rawTx *openwallet.RawTransaction) error {
 
 	var (
-		txState  ontologyTransaction.TxState
+		txState  ontologyTransaction.TxStateV2
 		gasPrice = ontologyTransaction.DefaultGasPrice
 		gasLimit = ontologyTransaction.DefaultGasLimit
 	)
@@ -159,7 +159,7 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 	keySignList := make([]*openwallet.KeySignature, 1, 1)
 
 	if rawTx.Coin.Contract.Address == ontologyTransaction.ONGContractAddress {
-		amount, err := convertFlostStringToBigInt(amountStr)
+		amount, err := convertFloatStringToBigInt(amountStr, int(rawTx.Coin.Contract.Decimals))
 		if err != nil {
 			return errors.New("ONG can be divided,with 100000000 smallest unit equls 1 ONG")
 		}
@@ -181,7 +181,7 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 					return fmt.Errorf("Unbound ONG is not enough to withdraw in address : " + to)
 				}
 
-				txState.Amount = amount.Sub(a.ONGUnbound, fee).Uint64()
+				txState.Amount = amount.Sub(a.ONGUnbound, fee)
 				keySignList = append(keySignList, &openwallet.KeySignature{
 					Address: &openwallet.Address{
 						AccountID:   addresses[addressesBalanceList[i].index].AccountID,
@@ -208,7 +208,7 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 
 		} else { // ONG transaction
 			txState.AssetType = ontologyTransaction.AssetONG
-			txState.Amount = amount.Uint64()
+			txState.Amount = amount
 			txState.To = to
 			count := big.NewInt(0)
 			countList := []uint64{}
@@ -219,7 +219,7 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 						countList = append(countList, a.ONGBalance.Sub(a.ONGBalance, count.Sub(count, amount)).Uint64())
 						return fmt.Errorf("The ONG of the account is enough," +
 							" but cannot be sent in just one transaction!\n" +
-							"the amount can be sent in " + string(len(countList)) +
+							"the amount can be sent in " + fmt.Sprint(len(countList)) +
 							"times with amounts :\n" + strings.Replace(strings.Trim(fmt.Sprint(countList), "[]"), " ", ",", -1))
 
 					} else {
@@ -236,12 +236,12 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 			}
 		}
 	} else if rawTx.Coin.Contract.Address == ontologyTransaction.ONTContractAddress { // ONT transaction
-		amount, err := convertIntStringToBigInt(amountStr)
+		amount, err := convertFloatStringToBigInt(amountStr, int(rawTx.Coin.Contract.Decimals))
 		if err != nil {
 			return errors.New("ONT is the smallest unit which cannot be divided,the amount input should never be a float number")
 		}
 		txState.AssetType = ontologyTransaction.AssetONT
-		txState.Amount = amount.Uint64()
+		txState.Amount = amount
 		txState.To = to
 		count := big.NewInt(0)
 		countList := []uint64{}
@@ -252,7 +252,7 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 					countList = append(countList, a.ONTBalance.Sub(a.ONTBalance, count.Sub(count, amount)).Uint64())
 					return fmt.Errorf("The ONT of the account is enough," +
 						" but cannot be sent in just one transaction!\n" +
-						"the amount can be sent in " + string(len(countList)) +
+						"the amount can be sent in " + fmt.Sprint(len(countList)) +
 						"times with amounts :\n" + strings.Replace(strings.Trim(fmt.Sprint(countList), "[]"), " ", ",", -1))
 				} else {
 					countList = append(countList, a.ONTBalance.Uint64())
@@ -279,15 +279,15 @@ func (decoder *TransactionDecoder) CreateONTRawTransaction(wrapper openwallet.Wa
 	rawTx.TxFrom = []string{txState.From}
 	rawTx.TxTo = []string{txState.To}
 	if txState.AssetType == ontologyTransaction.AssetONT {
-		rawTx.TxAmount = strconv.FormatUint(txState.Amount, 10)
+		rawTx.TxAmount = amountStr //txState.Amount.String() //strconv.FormatUint(txState.Amount, 10)
 	} else if txState.AssetType == ontologyTransaction.AssetONG {
-		ongAmount, _ := convertBigIntToFloatDecimal(strconv.FormatUint(txState.Amount, 10))
-		rawTx.TxAmount = ongAmount.String()
+		//ongAmount, _ := convertBigIntToFloatDecimal(txState.Amount.String())
+		rawTx.TxAmount = amountStr //ongAmount.String()
 
 	} else {
 		// other token
 	}
-	emptyTrans, transHash, err := ontologyTransaction.CreateRawTransactionAndHash(gasPrice, gasLimit, txState)
+	emptyTrans, transHash, err := ontologyTransaction.CreateRawTransactionAndHashV2(gasPrice, gasLimit, txState)
 	if err != nil {
 		return err
 	}
@@ -774,7 +774,7 @@ func (decoder *TransactionDecoder) createRawTransaction(wrapper openwallet.Walle
 	}
 
 	if rawTx.Coin.Contract.Address == ontologyTransaction.ONGContractAddress {
-		amount, err := convertFlostStringToBigInt(amountStr)
+		amount, err := convertFloatStringToBigInt(amountStr, int(rawTx.Coin.Contract.Decimals))
 		if err != nil {
 			return errors.New("ONG can be divided,with 100000000 smallest unit equls 1 ONG")
 		}

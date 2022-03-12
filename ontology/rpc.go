@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"net/http"
 	"strconv"
 
@@ -183,7 +184,7 @@ func (rpc *RpcClient) getTxCountImMemPool() (uint64, error) {
 func (rpc *RpcClient) getONTBalance(address string) (*AddrBalance, error) {
 	params := []interface{}{address}
 
-	balance, err := rpc.sendRpcRequest("0", "getbalance", params)
+	balance, err := rpc.sendRpcRequest("0", "getbalancev2", params)
 	if err != nil {
 		return nil, errors.New("get ONT balance failed!")
 	}
@@ -201,7 +202,7 @@ func (rpc *RpcClient) getBalance(address string) (*AddrBalance, error) {
 
 	params := []interface{}{address}
 
-	balance, err := rpc.sendRpcRequest("0", "getbalance", params)
+	balance, err := rpc.sendRpcRequest("0", "getbalancev2", params)
 	if err != nil {
 		return nil, errors.New("Get address balance failed")
 	}
@@ -217,6 +218,18 @@ func (rpc *RpcClient) getBalance(address string) (*AddrBalance, error) {
 	ret.Address = address
 
 	return ret, nil
+}
+
+func calculateAmount(arg3, arg4 string) string {
+	a3, _ := new(big.Int).SetString(arg3, 10)
+	ret := a3.Mul(a3, big.NewInt(1000000000))
+
+	if arg4 != "" {
+		a4, _ := new(big.Int).SetString(arg4, 10)
+		ret = ret.Add(ret, a4)
+	}
+
+	return ret.String()
 }
 
 // from,to,amount,contract,method,error
@@ -241,8 +254,14 @@ func (rpc *RpcClient) getTxDetail(txid string) ([]Notify, error) {
 			}
 			states := notify.Get("States").Array()
 
-			if len(states) != 4 {
+			if len(states) != 4 && len(states) != 5 {
 				return nil, errors.New("Get transaction result failed")
+			}
+			amount := ""
+			if len(states) == 5 {
+				amount = calculateAmount(states[3].String(), states[4].String())
+			} else {
+				amount = calculateAmount(states[3].String(), "")
 			}
 			if states[2].String() != "AFmseVrdL9f9oyCzZefL9tG6UbviEH9ugK" {
 				ret = append(ret, Notify{
@@ -250,7 +269,7 @@ func (rpc *RpcClient) getTxDetail(txid string) ([]Notify, error) {
 					Method:          states[0].String(),
 					From:            states[1].String(),
 					To:              states[2].String(),
-					Amount:          states[3].String(),
+					Amount:          amount,
 				})
 			} else {
 				ret = append(ret, Notify{
@@ -259,7 +278,7 @@ func (rpc *RpcClient) getTxDetail(txid string) ([]Notify, error) {
 					Method:          states[0].String(),
 					From:            states[1].String(),
 					To:              states[2].String(),
-					Amount:          states[3].String(),
+					Amount:          amount,
 				})
 			}
 

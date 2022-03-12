@@ -31,38 +31,13 @@ func newONTBalance(data string) *AddrBalance {
 }
 
 func newAddrBalance(data []string) *AddrBalance {
-	// getbalance
-	/*
-		{
-			"Action":"getbalance",
-			"Desc":"SUCCESS",
-			"Error":0,
-			"Result":
-			{
-				"ont":"899999999",
-				"ong":"62785074999999999"
-			},
-				"Version":"1.0.0"
-			}
-	*/
-	//getunboundong
-	/*
-		{
-			"Action":"getunboundong",
-			"Desc":"SUCCESS",
-			"Error":0,
-			"Result":"1575449000000000","
-			Version":"1.0.0"
-		}
-	*/
-
-	ontBalance, err := strconv.ParseInt(gjson.Get(data[0], "ont").String(), 10, 64)
-	if err != nil {
+	ontBalance, ret := new(big.Int).SetString(gjson.Get(data[0], "ont").String(), 10) //strconv.ParseInt(gjson.Get(data[0], "ont").String(), 10, 64)
+	if ret == false {
 		return nil
 	}
 
-	ongBalance, err := strconv.ParseInt(gjson.Get(data[0], "ong").String(), 10, 64)
-	if err != nil {
+	ongBalance, ret := new(big.Int).SetString(gjson.Get(data[0], "ong").String(), 10) //strconv.ParseInt(gjson.Get(data[0], "ong").String(), 10, 64)
+	if ret == false {
 		return nil
 	}
 
@@ -71,20 +46,20 @@ func newAddrBalance(data []string) *AddrBalance {
 		return nil
 	}
 	return &AddrBalance{
-		ONTBalance: big.NewInt(ontBalance),
-		ONGBalance: big.NewInt(ongBalance),
+		ONTBalance: ontBalance,
+		ONGBalance: ongBalance,
 		ONGUnbound: big.NewInt(ongUnbound),
 	}
 }
 
-func convertFlostStringToBigInt(amount string) (*big.Int, error) {
+func convertFloatStringToBigInt(amount string, offset int) (*big.Int, error) {
 	vDecimal, err := decimal.NewFromString(amount)
 	if err != nil {
 		return nil, err
 	}
 
 	decimalInt := big.NewInt(1)
-	for i := 0; i < 9; i++ {
+	for i := 0; i < offset; i++ {
 		decimalInt.Mul(decimalInt, big.NewInt(10))
 	}
 	d, _ := decimal.NewFromString(decimalInt.String())
