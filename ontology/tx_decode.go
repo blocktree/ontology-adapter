@@ -532,6 +532,7 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 	}
 
 	fee := big.NewInt(int64(gasLimit * gasPrice))
+	fee = fee.Mul(fee, big.NewInt(1000000000))
 
 	if minTransfer.Cmp(retainedBalance) < 0 {
 		return nil, fmt.Errorf("mini transfer amount must be greater than address retained balance")
@@ -590,7 +591,9 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 			feeSupports.fs = append(feeSupports.fs, feeSupport{address: addr.Address, amount: balance.ONGBalance.Int64()})
 		}
 
-		if ongContains.Int64() < extraFee*int64(gasLimit*gasPrice) {
+		feeInOng := big.NewInt(extraFee * int64(gasLimit*gasPrice))
+		feeInOng = feeInOng.Mul(feeInOng, big.NewInt(1000000000))
+		if ongContains.Cmp(feeInOng) < 0 {
 			return nil, fmt.Errorf("No enough ONG found in fee support account!")
 		}
 	}
@@ -614,19 +617,21 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 			if sumAmount_BI.Cmp(big.NewInt(0)) <= 0 {
 				continue
 			}
-			sumAmount := convertToAmount(sumAmount_BI.Uint64())
-			fees := convertToAmount(fee.Uint64())
+
+			sumAmountDecimal, _ := convertBigIntToFloatViaDecimal(sumAmount_BI.String(), int(sumRawTx.Coin.Contract.Decimals))
+			//sumAmount := convertToAmount(sumAmount_BI.Uint64(), int(sumRawTx.Coin.Contract.Decimals))
+			fees, _ := convertBigIntToFloatViaDecimal(fee.String(), 18)
 
 			//log.Debugf("balance: %v", addrBalance.Balance)
-			log.Debugf("fees: %v", fees)
-			log.Debugf("sumAmount: %v", sumAmount)
+			log.Debugf("fees: %v", fees.String())
+			log.Debugf("sumAmount: %v", sumAmountDecimal.String())
 			if feeEnough[i] {
 				//创建一笔交易单
 				rawTx := &openwallet.RawTransaction{
 					Coin:    sumRawTx.Coin,
 					Account: sumRawTx.Account,
 					To: map[string]string{
-						sumRawTx.SummaryAddress: sumAmount,
+						sumRawTx.SummaryAddress: sumAmountDecimal.String(),
 					},
 					Required: 1,
 				}
@@ -648,7 +653,7 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 					Coin:    sumRawTx.Coin,
 					Account: sumRawTx.Account,
 					To: map[string]string{
-						sumRawTx.SummaryAddress: sumAmount,
+						sumRawTx.SummaryAddress: sumAmountDecimal.String(),
 					},
 					Required: 1,
 				}
@@ -678,11 +683,14 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 			sumAmount_BI.Sub(addrBalance_BI, retainedBalance)
 
 			sumAmount := sumAmount_BI.String()
-			fees := convertToAmount(fee.Uint64())
 
-			log.Debugf("balance: %v", addrBalance.Balance)
-			log.Debugf("fees: %v", fees)
-			log.Debugf("sumAmount: %v", sumAmount)
+			fees, _ := convertBigIntToFloatViaDecimal(fee.String(), 18)
+			addrBalanceDecimal, _ := convertBigIntToFloatViaDecimal(addrBalance.Balance, int(sumRawTx.Coin.Contract.Decimals))
+			sumAmountDecimal, _ := convertBigIntToFloatViaDecimal(sumAmount, int(sumRawTx.Coin.Contract.Decimals))
+
+			log.Debugf("balance: %v", addrBalanceDecimal.String())
+			log.Debugf("fees: %v", fees.String())
+			log.Debugf("sumAmount: %v", sumAmountDecimal.String())
 			if feeEnough[i] {
 				//创建一笔交易单
 				rawTx := &openwallet.RawTransaction{
@@ -737,7 +745,7 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 
 func (decoder *TransactionDecoder) createRawTransaction(wrapper openwallet.WalletDAI, rawTx *openwallet.RawTransaction, addrBalance *openwallet.Balance, payer string) error {
 	var (
-		txState  ontologyTransaction.TxState
+		txState  ontologyTransaction.TxStateV2
 		gasPrice = ontologyTransaction.DefaultGasPrice
 		gasLimit = ontologyTransaction.DefaultGasLimit
 		err      error
@@ -780,7 +788,7 @@ func (decoder *TransactionDecoder) createRawTransaction(wrapper openwallet.Walle
 		}
 
 		txState.AssetType = ontologyTransaction.AssetONG
-		txState.Amount = amount.Uint64()
+		txState.Amount = amount
 		txState.To = to
 		txState.Payer = payer
 		txState.From = addrBalance.Address
@@ -791,7 +799,7 @@ func (decoder *TransactionDecoder) createRawTransaction(wrapper openwallet.Walle
 			return errors.New("ONT is the smallest unit which cannot be divided,the amount input should never be a float number")
 		}
 		txState.AssetType = ontologyTransaction.AssetONT
-		txState.Amount = amount.Uint64()
+		txState.Amount = amount
 		txState.To = to
 		txState.Payer = payer
 		txState.From = addrBalance.Address
@@ -805,15 +813,14 @@ func (decoder *TransactionDecoder) createRawTransaction(wrapper openwallet.Walle
 	rawTx.TxFrom = []string{txState.From}
 	rawTx.TxTo = []string{txState.To}
 	if txState.AssetType == ontologyTransaction.AssetONT {
-		rawTx.TxAmount = strconv.FormatUint(txState.Amount, 10)
+		rawTx.TxAmount = amountStr
 	} else if txState.AssetType == ontologyTransaction.AssetONG {
-		ongAmount, _ := convertBigIntToFloatDecimal(strconv.FormatUint(txState.Amount, 10))
-		rawTx.TxAmount = ongAmount.String()
+		rawTx.TxAmount = amountStr
 
 	} else {
 		// other token
 	}
-	emptyTrans, transHash, err := ontologyTransaction.CreateRawTransactionAndHash(gasPrice, gasLimit, txState)
+	emptyTrans, transHash, err := ontologyTransaction.CreateRawTransactionAndHashV2(gasPrice, gasLimit, txState)
 	if err != nil {
 		return err
 	}
@@ -871,5 +878,5 @@ func (decoder *TransactionDecoder) GetRawTransactionFeeRate() (feeRate string, u
 		}
 	}
 
-	return convertToAmount(gasLimit * gasPrice), "TX", nil
+	return convertToAmount(gasLimit*gasPrice, 9), "TX", nil
 }

@@ -544,10 +544,14 @@ func (bs *ONTBlockScanner) ExtractTransaction(blockHeight uint64, blockHash stri
 }
 
 // 从最小单位的 amount 转为带小数点的表示
-func convertToAmount(amount uint64) string {
+func convertToAmount(amount uint64, offset int) string {
 	amountStr := fmt.Sprintf("%d", amount)
 	d, _ := decimal.NewFromString(amountStr)
-	w, _ := decimal.NewFromString("1000000000")
+	tmp := "1"
+	for i := 0; i < offset; i++ {
+		tmp += "0"
+	}
+	w, _ := decimal.NewFromString("tmp")
 	d = d.Div(w)
 	return d.String()
 }
