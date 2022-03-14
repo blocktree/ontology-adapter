@@ -131,8 +131,9 @@ func NewBlock(json *gjson.Result) *Block {
 	txs := gjson.Get(json.Raw, "Transactions").Array()
 
 	for _, tx := range txs {
-
-		obj.Transactions = append(obj.Transactions, gjson.Get(tx.Raw, "Hash").String())
+		if gjson.Get(tx.Raw, "TxType").Uint() == 209 {
+			obj.Transactions = append(obj.Transactions, gjson.Get(tx.Raw, "Hash").String())
+		}
 	}
 
 	return obj

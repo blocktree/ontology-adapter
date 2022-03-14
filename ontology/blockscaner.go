@@ -525,6 +525,9 @@ func (bs *ONTBlockScanner) ExtractTransaction(blockHeight uint64, blockHash stri
 	)
 
 	//log.Std.Debug("block scanner scanning tx: %s ...", txid)
+	if txid == "6ff104dd5249a736b99046f0dc1844c3cb9ba090447a075cfafe235cad1ce201" {
+		fmt.Println("break here")
+	}
 	trx, err := bs.wm.GetTransaction(txid)
 
 	if err != nil {
