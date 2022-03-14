@@ -440,19 +440,20 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransactionWithError(wrapper 
 
 type feeSupport struct {
 	address string
-	amount  int64
+	amount  *big.Int
 }
 
 type feeSupports struct {
 	fs []feeSupport
 }
 
-func (fs feeSupports) getFeeAddress(amount int64) string {
+func (fs feeSupports) getFeeAddress(amount *big.Int) string {
 	address := ""
-	payed := int64(0)
+	payed := new(big.Int).SetInt64(0)
 	for index := 0; index < len(fs.fs); index++ {
-		payed += fs.fs[index].amount
-		if payed >= amount {
+		payed = payed.Add(payed, fs.fs[index].amount)
+
+		if payed.Cmp(amount) >= 0 {
 			address = fs.fs[index].address
 		}
 	}
@@ -588,7 +589,7 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 				return nil, err
 			}
 			ongContains.Add(ongContains, balance.ONGBalance)
-			feeSupports.fs = append(feeSupports.fs, feeSupport{address: addr.Address, amount: balance.ONGBalance.Int64()})
+			feeSupports.fs = append(feeSupports.fs, feeSupport{address: addr.Address, amount: balance.ONGBalance})
 		}
 
 		feeInOng := big.NewInt(extraFee * int64(gasLimit*gasPrice))
@@ -597,7 +598,7 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 			return nil, fmt.Errorf("No enough ONG found in fee support account!")
 		}
 	}
-	feeExtra := int64(0)
+	feeExtra := new(big.Int).SetInt64(0)
 	for i, addrBalance := range addrBalanceArray {
 
 		if sumRawTx.Coin.Contract.Address == ontologyTransaction.ONGContractAddress {
@@ -647,7 +648,7 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 				//创建成功，添加到队列
 				rawTxArray = append(rawTxArray, rawTx)
 			} else {
-				feeExtra += int64(gasLimit * gasPrice)
+				feeExtra = feeExtra.Add(feeExtra, fee)
 				//创建一笔交易单
 				rawTx := &openwallet.RawTransaction{
 					Coin:    sumRawTx.Coin,
@@ -713,7 +714,7 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 				//创建成功，添加到队列
 				rawTxArray = append(rawTxArray, rawTx)
 			} else {
-				feeExtra += int64(gasLimit * gasPrice)
+				feeExtra = feeExtra.Add(feeExtra, fee)
 
 				//创建一笔交易单
 				rawTx := &openwallet.RawTransaction{
@@ -780,7 +781,7 @@ func (decoder *TransactionDecoder) createRawTransaction(wrapper openwallet.Walle
 		amountStr = v
 		break
 	}
-
+	//
 	if rawTx.Coin.Contract.Address == ontologyTransaction.ONGContractAddress {
 		amount, err := convertFloatStringToBigInt(amountStr, int(rawTx.Coin.Contract.Decimals))
 		if err != nil {
