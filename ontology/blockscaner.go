@@ -551,7 +551,7 @@ func convertToAmount(amount uint64, offset int) string {
 	for i := 0; i < offset; i++ {
 		tmp += "0"
 	}
-	w, _ := decimal.NewFromString("tmp")
+	w, _ := decimal.NewFromString(tmp)
 	d = d.Div(w)
 	return d.String()
 }
